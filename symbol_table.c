@@ -30,6 +30,7 @@ int insert(char *name, int val) {
   current = current->next;
   current->name = strdup(name);
   current->val = val;
+  current->next = NULL;
   return 0;
 }
 
