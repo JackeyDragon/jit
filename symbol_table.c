@@ -67,21 +67,3 @@ void print_table() {
 
   return;
 }
-
-int main(int argc, char *argv[]) {
-  insert("a", 1);
-  insert("b", 2);
-  insert("c", 3);
-
-  print_entry(head);
-  printf("\n");
-  print_entry(head->next);
-  printf("\n");
-  print_table();
-
-  print_entry(get_entry_by_name("b"));
-  set_entry_val("b", 69);
-  printf("\n");
-  print_entry(get_entry_by_name("b"));
-  return 0;
-}

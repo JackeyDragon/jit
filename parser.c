@@ -1,3 +1,4 @@
+#include "symbol_table.h"
 #include "tokenizer.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -22,7 +23,7 @@ int parse_declare() {
     printf("Error: expected 'var'\n");
     return 1;
   }
-
+  struct token *name = current;
   if (expect(IDENTIFYER)) {
     printf("Error: expected identifier after 'var'\n");
     return 1;
@@ -32,7 +33,7 @@ int parse_declare() {
     printf("Error: expected '=' after identifier\n");
     return 1;
   }
-
+  struct token *val = current;
   if (expect(NUMBER)) {
     printf("Error: expected number after '='\n");
     return 1;
@@ -43,10 +44,13 @@ int parse_declare() {
     return 1;
   }
 
+  insert(name->value, atoi(val->value));
+
   return 0;
 }
 
 int parse_assign() {
+  struct token *identifier = current;
   if (expect(IDENTIFYER)) {
     printf("Error: expected identifier\n");
     return 1;
@@ -56,7 +60,7 @@ int parse_assign() {
     printf("Error: expected '=' after identifier\n");
     return 1;
   }
-
+  struct token *nummber = current;
   if (expect(NUMBER)) {
     printf("Error: expected number after '='\n");
     return 1;
@@ -66,11 +70,11 @@ int parse_assign() {
     printf("Error: expected ';' at end of assignment\n");
     return 1;
   }
-
+  set_entry_val(identifier->value, atoi(nummber->value));
   return 0;
 }
 
-int parse() {
+int parse_S() {
   int error = 0;
   printf("\n");
   while (current != NULL) {
@@ -85,20 +89,29 @@ int parse() {
   return error;
 }
 
-int main(int argc, char *argv[]) {
+int parse(char *input) {
   struct token *head;
+  head = tokinize(input);
+  print_tokens(head);
+  current = head;
+  if (parse_S() == 0) {
+    print("\nparsing successfull");
+  } else {
+    print("\nparsing failed");
+    return -1;
+  }
+  print_table();
+  return 0;
+}
+
+int main(int argc, char *argv[]) {
   goto test;
   char input[100];
   printf("please input your string: ");
   fgets(input, sizeof(input), stdin);
 test:
-  head = tokinize("          var a = 123; var b = 555;");
-  print_tokens(head);
-  current = head;
-  if (parse() == 0) {
-    print("\nparsing successfull");
-  } else {
-    print("\nparsing failed");
-  }
+  parse("          var a = 123; var b = 555;");
+  print("changing b");
+  parse("b = 3;");
   return 0;
 }
