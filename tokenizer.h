@@ -5,6 +5,7 @@
 enum token_type {
   IDENTIFYER,
   KEYWORD_VAR,
+  KEYWORD_IF,
   TOKEN_ASSIGN,
   NUMBER,
   SEMICOLON,
@@ -18,6 +19,8 @@ enum token_type {
   NOT_EQUAL,
   BRACKET_OPEN,
   BRACKET_CLOSE,
+  CURLY_BRACKET_OPEN,
+  CURLY_BRACKET_CLOSE,
   UNKNOWN
 };
 

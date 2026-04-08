@@ -9,6 +9,7 @@
 ast *parse_statement();
 ast *parse_declaration_ast();
 ast *parse_assignment_ast();
+ast *parse_if();
 
 struct token *current;
 
@@ -25,6 +26,8 @@ int expect(enum token_type type) {
 }
 
 ast *parse_expression(int min_bp) {
+  printf("DEBUG parse_expression: called, min_bp=%d, current=%s\n", min_bp,
+         current ? current->value : "NULL");
   if (!current)
     return NULL;
   ast *lhs;
@@ -40,7 +43,7 @@ ast *parse_expression(int min_bp) {
     break;
   case IDENTIFYER:
     lhs = malloc(sizeof(ast));
-    lhs->type = NODE_IDENTIFIER;
+    lhs->type = NODE_REFERENCE;
     lhs->value = current->value;
     lhs->lhs = NULL;
     lhs->rhs = NULL;
@@ -117,22 +120,29 @@ ast *parse_statement() {
         // can this go?
         stmt = parse_expression(0);
       }
+    } else if (current->type == KEYWORD_IF) {
+      stmt = parse_if();
     }
 
     if (!stmt)
       break;
 
-    if (current == NULL || current->type != SEMICOLON) {
+    int requires_semicolon = 1;
+    if (stmt->type == NODE_IF_CONDITION)
+      requires_semicolon = 0;
+
+    if (requires_semicolon && (current == NULL || current->type != SEMICOLON)) {
       print("missing semicolon");
       return NULL;
-    } else {
-      if (!first) {
-        first = tail = stmt;
-      } else {
-        tail->next_statement = stmt;
-        tail = stmt;
-      }
+    } else if (requires_semicolon) {
       current = current->next;
+    }
+
+    if (!first) {
+      first = tail = stmt;
+    } else {
+      tail->next_statement = stmt;
+      tail = stmt;
     }
   }
 
@@ -162,11 +172,35 @@ ast *parse_declaration_ast() {
   return decl;
 }
 
+ast *parse_if() {
+  printf("DEBUG parse_if: called, current token: %s\n",
+         current ? current->value : "NULL");
+  if (!current || current->type != KEYWORD_IF)
+    return NULL;
+
+  printf("DEBUG parse_if: after consuming IF, current token: %s\n",
+         current ? current->value : "NULL");
+  ast *stmt_if = malloc(sizeof(ast));
+  stmt_if->type = NODE_IF_CONDITION;
+  stmt_if->value = "if";
+  printf("DEBUG parse_if: set NODE_IF_CONDITION, value=if\n");
+
+  current = current->next;
+  if (!current || current->type != BRACKET_OPEN)
+    return NULL;
+
+  stmt_if->rhs = parse_expression(0);
+  stmt_if->lhs = NULL;
+  stmt_if->next_statement = parse_statement();
+
+  return stmt_if;
+}
+
 ast *parse_assignment_ast() {
   if (!current || current->type != IDENTIFYER)
     return NULL;
   ast *ident = malloc(sizeof(ast));
-  ident->type = NODE_IDENTIFIER;
+  ident->type = NODE_REFERENCE;
   ident->value = current->value;
   ident->lhs = NULL;
   ident->rhs = NULL;

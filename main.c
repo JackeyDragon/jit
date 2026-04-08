@@ -84,6 +84,7 @@ int main(int argc, char *argv[]) {
     current = head;
     ast *tree = parse_statement();
     if (!tree) {
+      print("continue");
       input = NULL;
       continue;
     }

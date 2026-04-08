@@ -11,6 +11,8 @@ const char *token_type_to_string(enum token_type type) {
     return "IDENTIFIER";
   case KEYWORD_VAR:
     return "KEYWORD_VAR";
+  case KEYWORD_IF:
+    return "KEYWORD_IF";
   case TOKEN_ASSIGN:
     return "TOKEN_ASSIGN";
   case NUMBER:
@@ -37,6 +39,10 @@ const char *token_type_to_string(enum token_type type) {
     return "BRACKET_OPEN";
   case BRACKET_CLOSE:
     return "BRACKET_CLOSE";
+  case CURLY_BRACKET_OPEN:
+    return "CURLY_BRACKET_OPEN";
+  case CURLY_BRACKET_CLOSE:
+    return "CURLY_BRACKET_CLOSE";
   default:
     return "UNKNOWN";
   }
@@ -57,6 +63,8 @@ void is_keyword(struct token *token) {
   char *value = token->value;
   if (strcmp(value, "var") == 0) {
     token->type = KEYWORD_VAR;
+  } else if (strcmp(value, "if") == 0) {
+    token->type = KEYWORD_IF;
   } else {
     token->type = IDENTIFYER;
   }
@@ -190,6 +198,16 @@ struct token *tokinize(char *string) {
     } else if (strncmp(string + pos, ")", 1) == 0) {
       token->type = BRACKET_CLOSE;
       token->value = strdup(")");
+      pos++;
+      break;
+    } else if (strncmp(string + pos, "{", 1) == 0) {
+      token->type = CURLY_BRACKET_OPEN;
+      token->value = strdup("{");
+      pos++;
+      break;
+    } else if (strncmp(string + pos, "}", 1) == 0) {
+      token->type = CURLY_BRACKET_CLOSE;
+      token->value = strdup("}");
       pos++;
       break;
     } else {
