@@ -75,11 +75,18 @@ int exec_if(ast **statement) {
 
   printf("%d\n", val);
 
-  if (val && (*statement)->next_statement) {
-    *statement = (*statement)->next_statement;
-  } else if ((*statement)->next_statement &&
-             (*statement)->next_statement->next_statement) {
-    *statement = (*statement)->next_statement->next_statement;
+  if (val == 0) {
+    // condition false: skip the body by linking past it to what comes after
+    ast *body = (*statement)->next_statement;
+    if (body) {
+      (*statement)->next_statement = body->next_statement;
+    }
+  } else {
+    // condition true: execute the body by recursively calling execute_statement
+    ast *body = (*statement)->next_statement;
+    if (body) {
+      execute_statement(body);
+    }
   }
   return status;
 }
@@ -104,6 +111,8 @@ int execute_statement(ast *statement) {
     break;
   case NODE_ASSIGN:
     exec_assign(statement);
+    break;
+  case NODE_REFERENCE:
     break;
   default:
     print("bad statement");
