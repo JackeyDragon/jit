@@ -25,8 +25,12 @@ static void enable_raw_mode(void) {
   struct termios raw;
   tcgetattr(STDIN_FILENO, &orig_termios);
   raw = orig_termios;
-  raw.c_lflag &= ~(ICANON | ECHO);
-  tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+  raw.c_iflag = 0;
+  raw.c_lflag &= ~(ICANON | ECHO | IEXTEN);
+  raw.c_oflag = 0;
+  raw.c_cc[VMIN] = 1;
+  raw.c_cc[VTIME] = 0;
+  tcsetattr(STDIN_FILENO, TCSANOW, &raw);
 }
 
 static char *readline(char *prompt) {
