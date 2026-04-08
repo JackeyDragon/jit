@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct entry *head;
+static struct entry *head;
 
 void print_entry(struct entry *entry) {
   printf("[%s: %d]", entry->name, entry->val);
@@ -25,6 +25,8 @@ int insert(char *name, int val) {
       return -1;
     current = current->next;
   }
+  if (strcmp(current->name, name) == 0)
+    return -1;
 
   current->next = malloc(sizeof(struct entry));
   current = current->next;

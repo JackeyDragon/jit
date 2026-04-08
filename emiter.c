@@ -4,77 +4,62 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-struct entry *head;
 int init() { return 0; }
 
 int eval_expression(ast *expresion, int *status) {
   (*status) = 0;
-  if (expresion->type != NODE_EXPRESION) {
+  if (expresion->type == NODE_NUMBER) {
+    return atoi(expresion->value);
+  }
+  if (expresion->type == NODE_REFERENCE) {
+    return get_entry_by_name(expresion->value)->val;
+  }
+  if (expresion->type != NODE_EXPRESION && expresion->type != NODE_OPERATION) {
     (*status) = 1;
     return 0;
   }
 
-  ast *lhs = expresion->lhs;
+  ast *expr = expresion->type == NODE_OPERATION ? expresion : expresion->lhs;
 
-  switch (lhs->type) {
-  case NODE_NUMBER:
-    return atoi(lhs->value);
-  case NODE_REFERENCE:
-    return get_entry_by_name(lhs->value)->val;
-  case NODE_OPERATION:
-    if (strcmp(lhs->value, "+") == 0) {
-      return eval_expression(lhs->lhs, status) +
-             eval_expression(lhs->rhs, status);
-    }
-    if (strcmp(lhs->value, "-") == 0) {
-      return eval_expression(lhs->lhs, status) -
-             eval_expression(lhs->rhs, status);
-    }
-    if (strcmp(lhs->value, "*") == 0) {
-      return eval_expression(lhs->lhs, status) *
-             eval_expression(lhs->rhs, status);
-    }
-    if (strcmp(lhs->value, "/") == 0) {
-      return eval_expression(lhs->lhs, status) /
-             eval_expression(lhs->rhs, status);
-    }
-    if (strcmp(lhs->value, "&&") == 0) {
-      return eval_expression(lhs->lhs, status) &&
-             eval_expression(lhs->rhs, status);
-    }
-    if (strcmp(lhs->value, "||") == 0) {
-      return eval_expression(lhs->lhs, status) ||
-             eval_expression(lhs->rhs, status);
-    }
-    if (strcmp(lhs->value, "==") == 0) {
-      return eval_expression(lhs->lhs, status) ==
-             eval_expression(lhs->rhs, status);
-    }
-    if (strcmp(lhs->value, "!=") == 0) {
-      return eval_expression(lhs->lhs, status) !=
-             eval_expression(lhs->rhs, status);
-    }
-    (*status) = 1;
-    return 0;
-  default:
-    (*status) = 1;
-    return 0;
+  if (strcmp(expr->value, "ADD") == 0) {
+    return eval_expression(expr->lhs, status) + eval_expression(expr->rhs, status);
   }
-
+  if (strcmp(expr->value, "MINUS") == 0) {
+    return eval_expression(expr->lhs, status) - eval_expression(expr->rhs, status);
+  }
+  if (strcmp(expr->value, "MULT") == 0) {
+    return eval_expression(expr->lhs, status) * eval_expression(expr->rhs, status);
+  }
+  if (strcmp(expr->value, "DIV") == 0) {
+    return eval_expression(expr->lhs, status) / eval_expression(expr->rhs, status);
+  }
+  if (strcmp(expr->value, "AND") == 0) {
+    return eval_expression(expr->lhs, status) && eval_expression(expr->rhs, status);
+  }
+  if (strcmp(expr->value, "OR") == 0) {
+    return eval_expression(expr->lhs, status) || eval_expression(expr->rhs, status);
+  }
+  if (strcmp(expr->value, "EQUAL") == 0) {
+    return eval_expression(expr->lhs, status) == eval_expression(expr->rhs, status);
+  }
+  if (strcmp(expr->value, "NOT_EQUAL") == 0) {
+    return eval_expression(expr->lhs, status) != eval_expression(expr->rhs, status);
+  }
+  (*status) = 1;
   return 0;
 }
 
 int declare(ast *statement) {
   int status = 0;
-  char *name = statement->value;
-  int val = eval_expression(statement->lhs, &status);
+  int val = eval_expression(statement->rhs, &status);
+  printf("insert statuse: %d\n", insert(statement->value, val));
   print_table();
   return status;
 }
 
 int execute_statement(ast *statement) {
-
   switch (statement->type) {
   case NODE_ROOT:
     init();
@@ -84,9 +69,12 @@ int execute_statement(ast *statement) {
     break;
   default:
     print("bad statement");
+    return 1;
+  }
+
+  if (statement->next_statement != NULL) {
+    return execute_statement(statement->next_statement);
   }
 
   return 0;
 }
-
-int main(int argc, char *argv[]) { return EXIT_SUCCESS; }

@@ -10,9 +10,6 @@ ast *parse_statement();
 ast *parse_declaration_ast();
 ast *parse_assignment_ast();
 
-struct ast *ast_head;
-struct ast *ast_tail;
-
 struct token *current;
 
 int expect(enum token_type type) {
@@ -59,7 +56,6 @@ ast *parse_expression(int min_bp) {
     current = current->next;
     break;
   default:
-    printf("bad token type in prefix\n");
     return NULL;
   }
 
@@ -102,14 +98,15 @@ ast *parse_expression(int min_bp) {
 }
 
 ast *parse_statement() {
-  if (!current) return NULL;
-  
+  if (!current)
+    return NULL;
+
   ast *first = NULL;
   ast *tail = NULL;
-  
-  while (current && current->type != SEMICOLON) {
+
+  while (current) {
     ast *stmt = NULL;
-    
+
     if (current->type == KEYWORD_VAR) {
       stmt = parse_declaration_ast();
     } else if (current->type == IDENTIFYER) {
@@ -117,157 +114,74 @@ ast *parse_statement() {
       if (peek && peek->type == TOKEN_ASSIGN) {
         stmt = parse_assignment_ast();
       } else {
+        // can this go?
         stmt = parse_expression(0);
       }
-    } else {
-      stmt = parse_expression(0);
     }
-    
-    if (!stmt) break;
-    
-    if (!first) {
-      first = tail = stmt;
+
+    if (!stmt)
+      break;
+
+    if (current == NULL || current->type != SEMICOLON) {
+      print("missing semicolon");
+      return NULL;
     } else {
-      tail->next_statement = stmt;
-      tail = stmt;
-    }
-    
-    if (current && current->type == SEMICOLON) {
+      if (!first) {
+        first = tail = stmt;
+      } else {
+        tail->next_statement = stmt;
+        tail = stmt;
+      }
       current = current->next;
     }
   }
-  
+
   return first;
 }
 
 ast *parse_declaration_ast() {
-  if (!current || current->type != KEYWORD_VAR) return NULL;
+  if (!current || current->type != KEYWORD_VAR)
+    return NULL;
   current = current->next;
-  
-  if (!current || current->type != IDENTIFYER) return NULL;
+
+  if (!current || current->type != IDENTIFYER)
+    return NULL;
   ast *decl = malloc(sizeof(ast));
   decl->type = NODE_DECLAR;
   decl->value = current->value;
   current = current->next;
-  
-  if (!current || current->type != TOKEN_ASSIGN) return NULL;
+
+  if (!current || current->type != TOKEN_ASSIGN)
+    return NULL;
   current = current->next;
-  
+
   decl->rhs = parse_expression(0);
   decl->lhs = NULL;
   decl->next_statement = NULL;
-  
+
   return decl;
 }
 
 ast *parse_assignment_ast() {
-  if (!current || current->type != IDENTIFYER) return NULL;
+  if (!current || current->type != IDENTIFYER)
+    return NULL;
   ast *ident = malloc(sizeof(ast));
   ident->type = NODE_IDENTIFIER;
   ident->value = current->value;
   ident->lhs = NULL;
   ident->rhs = NULL;
   current = current->next;
-  
-  if (!current || current->type != TOKEN_ASSIGN) return NULL;
+
+  if (!current || current->type != TOKEN_ASSIGN)
+    return NULL;
   current = current->next;
-  
+
   ast *assign = malloc(sizeof(ast));
   assign->type = NODE_ASSIGN;
   assign->lhs = ident;
   assign->rhs = parse_expression(0);
   assign->value = NULL;
   assign->next_statement = NULL;
-  
+
   return assign;
-}
-
-int parse_declare() {
-  struct ast *val = malloc(sizeof(struct ast));
-  val->type = NODE_DECLAR;
-  if (expect(KEYWORD_VAR)) {
-    printf("Error: expected 'var'\n");
-    return 1;
-  }
-  struct token *name = current;
-  val->value = current->value;
-
-  if (expect(IDENTIFYER)) {
-    printf("Error: expected identifier after 'var'\n");
-    return 1;
-  }
-
-  if (expect(TOKEN_ASSIGN)) {
-    printf("Error: expected '=' after identifier\n");
-    return 1;
-  }
-
-  val->rhs = parse_expression(0);
-
-  if (expect(SEMICOLON)) {
-    printf("Error: expected ';' at end of declaration\n");
-    return 1;
-  }
-  ast_tail->next_statement = val;
-  ast_tail = val;
-  return 0;
-}
-
-int parse_assign() {
-  struct ast *val = malloc(sizeof(struct ast));
-  val->type = NODE_ASSIGN;
-  if (expect(IDENTIFYER)) {
-    printf("Error: expected identifier\n");
-    return 1;
-  }
-
-  if (expect(TOKEN_ASSIGN)) {
-    printf("Error: expected '=' after identifier\n");
-    return 1;
-  }
-
-  val->rhs = parse_expression(0);
-
-  if (expect(SEMICOLON)) {
-    printf("Error: expected ';' at end of assignment\n");
-    return 1;
-  }
-  ast_tail->next_statement = val;
-  ast_tail = val;
-  return 0;
-}
-
-int parse_S() {
-  int error = 0;
-  printf("\n");
-  while (current != NULL) {
-    if (current->type == KEYWORD_VAR) {
-      error += parse_declare();
-    } else if (current->type == IDENTIFYER) {
-      error += parse_assign();
-    } else {
-      return 1;
-    }
-  }
-  return error;
-}
-
-int parse(char *input) {
-  struct token *head;
-  head = tokinize(input);
-  ast_head = malloc(sizeof(ast));
-  ast_head->rhs = ast_head->lhs = ast_head->next_statement = NULL;
-  ast_head->value = NULL;
-  ast_head->type = NODE_ROOT;
-
-  print_tokens(head);
-  current = head;
-  if (parse_S() == 0) {
-    print("\nparsing successfull");
-  } else {
-    print("\nparsing failed");
-    return -1;
-  }
-  print_table();
-  return 0;
 }

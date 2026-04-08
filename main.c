@@ -1,4 +1,5 @@
 #include "ast.h"
+#include "emiter.h"
 #include "tokenizer.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -6,7 +7,6 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-
 extern struct token *current;
 extern ast *parse_expression(int min_bp);
 extern ast *parse_statement();
@@ -31,11 +31,11 @@ static char *readline(char *prompt) {
   static char buf[4096];
   int pos = 0;
   buf[0] = '\0';
-  
+
   printf("%s", prompt);
   fflush(stdout);
   enable_raw_mode();
-  
+
   while (1) {
     char c;
     if (read(STDIN_FILENO, &c, 1) <= 0) {
@@ -57,27 +57,43 @@ static char *readline(char *prompt) {
     }
     fflush(stdout);
   }
-  
+
   disable_raw_mode();
   buf[pos] = '\0';
   return buf;
 }
 
 int main(int argc, char *argv[]) {
+  char *input = NULL;
+
+  if (argc > 1) {
+    input = argv[1];
+  }
+
   while (1) {
-    char *input = readline("> ");
-    if (!input || strlen(input) == 0) {
-      printf("Goodbye!\n");
-      break;
+    if (input == NULL) {
+      input = readline("> ");
+      if (!input || strlen(input) == 0) {
+        printf("Goodbye!\n");
+        break;
+      }
     }
 
     struct token *head = tokinize(input);
     print_tokens(head);
     current = head;
     ast *tree = parse_statement();
+    if (!tree) {
+      input = NULL;
+      continue;
+    }
     printf("\nAST:\n");
+
     print_ast(tree, 0);
+
+    execute_statement(tree);
     printf("\n");
+    input = NULL;
   }
   return EXIT_SUCCESS;
 }
