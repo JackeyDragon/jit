@@ -73,7 +73,8 @@ int expect(enum token_type type) {
 }
 
 ast *parse_expression(int min_bp) {
-  if (!current) return NULL;
+  if (!current)
+    return NULL;
   ast *lhs;
 
   switch (current->type) {
@@ -108,7 +109,8 @@ ast *parse_expression(int min_bp) {
   }
 
   while (true) {
-    if (!current) return lhs;
+    if (!current)
+      return lhs;
     enum token_type op;
     switch (current->type) {
     case SEMICOLON:
@@ -139,17 +141,21 @@ ast *parse_expression(int min_bp) {
     new_lhs->type = token_type_to_ast_type(op);
     new_lhs->lhs = lhs;
     new_lhs->rhs = rhs;
-    new_lhs->value = token_type_to_string(op);
+    new_lhs->value = strdup(token_type_to_string(op));
     lhs = new_lhs;
   }
 }
 
 int parse_declare() {
+  struct ast *val = malloc(sizeof(struct ast));
+  val->type = NODE_DECLAR;
   if (expect(KEYWORD_VAR)) {
     printf("Error: expected 'var'\n");
     return 1;
   }
   struct token *name = current;
+  val->value = current->value;
+
   if (expect(IDENTIFYER)) {
     printf("Error: expected identifier after 'var'\n");
     return 1;
@@ -159,20 +165,21 @@ int parse_declare() {
     printf("Error: expected '=' after identifier\n");
     return 1;
   }
-  struct ast *val = malloc(sizeof(struct ast));
+
+  val->rhs = parse_expression(0);
 
   if (expect(SEMICOLON)) {
     printf("Error: expected ';' at end of declaration\n");
     return 1;
   }
-
-  insert(name->value, atoi(val->value));
-
+  ast_tail->next_statement = val;
+  ast_tail = val;
   return 0;
 }
 
 int parse_assign() {
-  struct token *identifier = current;
+  struct ast *val = malloc(sizeof(struct ast));
+  val->type = NODE_ASSIGN;
   if (expect(IDENTIFYER)) {
     printf("Error: expected identifier\n");
     return 1;
@@ -182,17 +189,15 @@ int parse_assign() {
     printf("Error: expected '=' after identifier\n");
     return 1;
   }
-  struct token *nummber = current;
-  if (expect(NUMBER)) {
-    printf("Error: expected number after '='\n");
-    return 1;
-  }
+
+  val->rhs = parse_expression(0);
 
   if (expect(SEMICOLON)) {
     printf("Error: expected ';' at end of assignment\n");
     return 1;
   }
-  set_entry_val(identifier->value, atoi(nummber->value));
+  ast_tail->next_statement = val;
+  ast_tail = val;
   return 0;
 }
 
@@ -214,6 +219,11 @@ int parse_S() {
 int parse(char *input) {
   struct token *head;
   head = tokinize(input);
+  ast_head = malloc(sizeof(ast));
+  ast_head->rhs = ast_head->lhs = ast_head->next_statement = NULL;
+  ast_head->value = NULL;
+  ast_head->type = NODE_ROOT;
+
   print_tokens(head);
   current = head;
   if (parse_S() == 0) {

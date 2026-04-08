@@ -11,13 +11,15 @@ typedef enum {
   NODE_REFERENCE,
   NODE_KEYWORD,
   NODE_BRACKET_OPEN,
-  NODE_BRACKET_CLOSE
+  NODE_BRACKET_CLOSE,
+  NODE_ROOT
 } ast_type;
 
 typedef struct ast {
   ast_type type;
   struct ast *rhs;
   struct ast *lhs;
+  struct ast *next_statement;
   char *value;
 } ast;
 
