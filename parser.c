@@ -5,66 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
-#include <unistd.h>
-#define INPUT_BUF_SIZE 4096
 
 ast *parse_statement();
 ast *parse_declaration_ast();
 ast *parse_assignment_ast();
 
-static struct termios orig_termios;
 struct ast *ast_head;
 struct ast *ast_tail;
-
-static void disable_raw_mode(void) {
-  tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
-}
-
-static void enable_raw_mode(void) {
-  struct termios raw;
-  tcgetattr(STDIN_FILENO, &orig_termios);
-  raw = orig_termios;
-  raw.c_iflag = 0;
-  raw.c_lflag &= ~(ICANON | ECHO | IEXTEN);
-  raw.c_oflag = 0;
-  raw.c_cc[VMIN] = 1;
-  raw.c_cc[VTIME] = 0;
-  tcsetattr(STDIN_FILENO, TCSANOW, &raw);
-}
-
-static char *readline(char *prompt) {
-  static char buf[INPUT_BUF_SIZE];
-  int pos = 0;
-  printf("%s", prompt);
-  fflush(stdout);
-  enable_raw_mode();
-  while (1) {
-    char c;
-    if (read(STDIN_FILENO, &c, 1) <= 0) {
-      disable_raw_mode();
-      return NULL;
-    }
-    if (c == '\n') {
-      printf("\n");
-      break;
-    }
-    if (c == 127 || c == '\b') {
-      if (pos > 0) {
-        pos--;
-        printf("\b \b");
-        fflush(stdout);
-      }
-    } else if (c >= 32 && pos < INPUT_BUF_SIZE - 1) {
-      buf[pos++] = c;
-      printf("%c", c);
-      fflush(stdout);
-    }
-  }
-  disable_raw_mode();
-  buf[pos] = '\0';
-  return buf;
-}
 
 struct token *current;
 
