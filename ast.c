@@ -43,16 +43,16 @@ binding_power get_binding_power(enum token_type type) {
   switch (type) {
   case EQUAL:
   case NOT_EQUAL:
-    return (binding_power){.left = 10, .right = 9};
+    return (binding_power){.left = 1, .right = 0.9};
   case AND:
   case OR:
-    return (binding_power){.left = 10, .right = 9};
+    return (binding_power){.left = 1, .right = 0.9};
   case ADD:
   case MINUS:
-    return (binding_power){.left = 10, .right = 9};
+    return (binding_power){.left = 2, .right = 2.1};
   case MULT:
   case DIV:
-    return (binding_power){.left = 10, .right = 9};
+    return (binding_power){.left = 3, .right = 3.1};
   default:
     return (binding_power){.left = -1, .right = -1};
   }
