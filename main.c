@@ -1,18 +1,13 @@
 #include "ast.h"
 #include "tokenizer.h"
-#include "symbol_table.h"
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-struct token;
 extern struct token *current;
 extern ast *parse_expression(int min_bp);
 extern ast *parse_statement();
 extern void print_ast(ast *node, int depth);
-
-extern char *(*readline_func)(char *);
 
 int main(int argc, char *argv[]) {
   char input[4096];
