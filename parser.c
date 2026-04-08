@@ -3,6 +3,58 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <termios.h>
+#include <unistd.h>
+
+#define INPUT_BUF_SIZE 4096
+
+static struct termios orig_termios;
+
+static void disable_raw_mode(void) {
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+}
+
+static void enable_raw_mode(void) {
+  struct termios raw;
+  tcgetattr(STDIN_FILENO, &orig_termios);
+  raw = orig_termios;
+  raw.c_lflag &= ~(ICANON | ECHO);
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
+static char *readline(char *prompt) {
+  static char buf[INPUT_BUF_SIZE];
+  int pos = 0;
+  printf("%s", prompt);
+  fflush(stdout);
+  enable_raw_mode();
+  while (1) {
+    char c;
+    if (read(STDIN_FILENO, &c, 1) <= 0) {
+      disable_raw_mode();
+      return NULL;
+    }
+    if (c == '\n') {
+      printf("\n");
+      break;
+    }
+    if (c == 127 || c == '\b') {
+      if (pos > 0) {
+        pos--;
+        printf("\b \b");
+        fflush(stdout);
+      }
+    } else if (c >= 32 && pos < INPUT_BUF_SIZE - 1) {
+      buf[pos++] = c;
+      printf("%c", c);
+      fflush(stdout);
+    }
+  }
+  disable_raw_mode();
+  buf[pos] = '\0';
+  return buf;
+}
 
 struct token *current;
 
@@ -105,13 +157,16 @@ int parse(char *input) {
 }
 
 int main(int argc, char *argv[]) {
-  goto test;
-  char input[100];
-  printf("please input your string: ");
-  fgets(input, sizeof(input), stdin);
-test:
-  parse("          var a = 123; var b = 555;");
-  print("changing b");
-  parse("b = 3;");
+  while (1) {
+    char *input = readline("> ");
+    if (input == NULL) {
+      printf("Goodbye!\n");
+      break;
+    }
+    if (strlen(input) == 0) {
+      continue;
+    }
+    parse(input);
+  }
   return 0;
 }

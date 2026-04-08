@@ -1,5 +1,22 @@
 
-enum token_type { IDENTIFYER, KEYWORD_VAR, TOKEN_ASSIGN, NUMBER, SEMICOLON };
+enum token_type {
+  IDENTIFYER,
+  KEYWORD_VAR,
+  TOKEN_ASSIGN,
+  NUMBER,
+  SEMICOLON,
+  ADD,
+  MINUS,
+  MULT,
+  DIV,
+  AND,
+  OR,
+  EQUAL,
+  NOT_EQUAL,
+  BRACKET_OPEN,
+  BRACKET_CLOSE,
+  UNKNOWN
+};
 
 struct token {
   enum token_type type;

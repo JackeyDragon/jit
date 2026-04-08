@@ -17,6 +17,26 @@ const char *token_type_to_string(enum token_type type) {
     return "NUMBER";
   case SEMICOLON:
     return "SEMICOLON";
+  case ADD:
+    return "ADD";
+  case MINUS:
+    return "MINUS";
+  case MULT:
+    return "MULT";
+  case DIV:
+    return "DIV";
+  case AND:
+    return "AND";
+  case OR:
+    return "OR";
+  case EQUAL:
+    return "EQUAL";
+  case NOT_EQUAL:
+    return "NOT_EQUAL";
+  case BRACKET_OPEN:
+    return "BRACKET_OPEN";
+  case BRACKET_CLOSE:
+    return "BRACKET_CLOSE";
   default:
     return "UNKNOWN";
   }
@@ -54,10 +74,65 @@ int read_identifyer(char *string, struct token *token) {
   return pos;
 }
 
-char *is_operator(char *string) {
-  if (strncmp(string, "=", 1) == 0)
-    return "=";
-  return NULL;
+char *is_operator(char *string, struct token *token, int *pos) {
+  if (strncmp(string, "==", 2) == 0)
+    token->type = EQUAL;
+  else if (strncmp(string, "!=", 1) == 0)
+    token->type = NOT_EQUAL;
+  else if (strncmp(string, "||", 1) == 0)
+    token->type = OR;
+  else if (strncmp(string, "&&", 1) == 0)
+    token->type = AND;
+  // else if (strncmp(string, "!", 1) == 0)
+  //   token->type
+  else if (strncmp(string, "=", 1) == 0)
+    token->type = TOKEN_ASSIGN;
+  else if (strncmp(string, "+", 1) == 0)
+    token->type = ADD;
+  else if (strncmp(string, "-", 1) == 0)
+    token->type = MINUS;
+  else if (strncmp(string, "*", 1) == 0)
+    token->type = MULT;
+  else if (strncmp(string, "/", 1) == 0)
+    token->type = DIV;
+  else
+    token->type = UNKNOWN;
+
+  switch (token->type) {
+  case EQUAL:
+    token->value = strdup("==");
+    break;
+  case NOT_EQUAL:
+    token->value = strdup("!=");
+    break;
+  case OR:
+    token->value = strdup("||");
+    break;
+  case AND:
+    token->value = strdup("&&");
+    break;
+  case TOKEN_ASSIGN:
+    token->value = strdup("=");
+    break;
+  case ADD:
+    token->value = strdup("+");
+    break;
+  case MINUS:
+    token->value = strdup("-");
+    break;
+  case MULT:
+    token->value = strdup("*");
+    break;
+  case DIV:
+    token->value = strdup("/");
+    break;
+  default:
+    return NULL;
+  }
+
+  (*pos) += strlen(token->value);
+
+  return token->value;
 }
 
 int read_digit(char *string, struct token *token) {
@@ -92,12 +167,7 @@ struct token *tokinize(char *string) {
       is_keyword(token);
       break;
 
-    } else if (is_operator(string + pos) != NULL) {
-
-      char *operator = is_operator(string + pos);
-      token->type = TOKEN_ASSIGN;
-      token->value = operator;
-      pos += strlen(operator);
+    } else if (is_operator(string + pos, token, &pos) != NULL) {
       break;
 
     } else if (isdigit(string[pos])) {
@@ -121,4 +191,11 @@ struct token *tokinize(char *string) {
     token->next = tokinize(string + pos);
   }
   return token;
+}
+
+int main(int argc, char *argv[]) {
+  struct token *head;
+  head = tokinize("a + b = 3 != 4 == 5");
+  print_tokens(head);
+  return EXIT_SUCCESS;
 }
