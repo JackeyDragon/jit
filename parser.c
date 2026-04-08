@@ -9,6 +9,10 @@
 #include <unistd.h>
 #define INPUT_BUF_SIZE 4096
 
+ast *parse_statement();
+ast *parse_declaration_ast();
+ast *parse_assignment_ast();
+
 static struct termios orig_termios;
 struct ast *ast_head;
 struct ast *ast_tail;
@@ -144,6 +148,87 @@ ast *parse_expression(int min_bp) {
     new_lhs->value = strdup(token_type_to_string(op));
     lhs = new_lhs;
   }
+}
+
+ast *parse_statement() {
+  if (!current) return NULL;
+  
+  ast *first = NULL;
+  ast *tail = NULL;
+  
+  while (current && current->type != SEMICOLON) {
+    ast *stmt = NULL;
+    
+    if (current->type == KEYWORD_VAR) {
+      stmt = parse_declaration_ast();
+    } else if (current->type == IDENTIFYER) {
+      struct token *peek = current->next;
+      if (peek && peek->type == TOKEN_ASSIGN) {
+        stmt = parse_assignment_ast();
+      } else {
+        stmt = parse_expression(0);
+      }
+    } else {
+      stmt = parse_expression(0);
+    }
+    
+    if (!stmt) break;
+    
+    if (!first) {
+      first = tail = stmt;
+    } else {
+      tail->next_statement = stmt;
+      tail = stmt;
+    }
+    
+    if (current && current->type == SEMICOLON) {
+      current = current->next;
+    }
+  }
+  
+  return first;
+}
+
+ast *parse_declaration_ast() {
+  if (!current || current->type != KEYWORD_VAR) return NULL;
+  current = current->next;
+  
+  if (!current || current->type != IDENTIFYER) return NULL;
+  ast *decl = malloc(sizeof(ast));
+  decl->type = NODE_DECLAR;
+  decl->value = current->value;
+  current = current->next;
+  
+  if (!current || current->type != TOKEN_ASSIGN) return NULL;
+  current = current->next;
+  
+  decl->rhs = parse_expression(0);
+  decl->lhs = NULL;
+  decl->next_statement = NULL;
+  
+  return decl;
+}
+
+ast *parse_assignment_ast() {
+  if (!current || current->type != IDENTIFYER) return NULL;
+  ast *ident = malloc(sizeof(ast));
+  ident->type = NODE_IDENTIFIER;
+  ident->value = current->value;
+  ident->lhs = NULL;
+  ident->rhs = NULL;
+  current = current->next;
+  
+  if (!current || current->type != TOKEN_ASSIGN) return NULL;
+  current = current->next;
+  
+  ast *assign = malloc(sizeof(ast));
+  assign->type = NODE_ASSIGN;
+  assign->lhs = ident;
+  assign->rhs = parse_expression(0);
+  assign->value = NULL;
+  assign->next_statement = NULL;
+  
+  return assign;
 }
 
 int parse_declare() {

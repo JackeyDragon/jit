@@ -62,6 +62,12 @@ void print_ast(ast *node, int depth) {
   if (!node) return;
   for (int i = 0; i < depth; i++) printf("  ");
   switch (node->type) {
+  case NODE_DECLAR:
+    printf("DECLAR: %s\n", node->value);
+    break;
+  case NODE_ASSIGN:
+    printf("ASSIGN\n");
+    break;
   case NODE_NUMBER:
     printf("NUMBER: %s\n", node->value);
     break;
@@ -74,9 +80,17 @@ void print_ast(ast *node, int depth) {
   case NODE_KEYWORD:
     printf("KEYWORD: %s\n", node->value);
     break;
+  case NODE_ROOT:
+    printf("ROOT\n");
+    break;
   default:
-    printf("UNKNOWN\n");
+    printf("UNKNOWN (type=%d)\n", node->type);
   }
   print_ast(node->lhs, depth + 1);
   print_ast(node->rhs, depth + 1);
+  if (node->next_statement) {
+    for (int i = 0; i < depth; i++) printf("  ");
+    printf("-> next_statement:\n");
+    print_ast(node->next_statement, depth);
+  }
 }
