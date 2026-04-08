@@ -80,7 +80,6 @@ int main(int argc, char *argv[]) {
     }
 
     struct token *head = tokinize(input);
-    print_tokens(head);
     current = head;
     ast *tree = parse_statement();
     if (!tree) {
@@ -88,12 +87,7 @@ int main(int argc, char *argv[]) {
       input = NULL;
       continue;
     }
-    printf("\nAST:\n");
-
-    print_ast(tree, 0);
-
     execute_statement(tree);
-    printf("\n");
     input = NULL;
   }
   return EXIT_SUCCESS;

@@ -6,6 +6,9 @@
 #include <string.h>
 #include <unistd.h>
 
+int execute_statement(ast *statement);
+int count = 0; // counts how many things have been executed. This way we print
+               // symbol_table only once
 int init() { return 0; }
 
 int eval_expression(ast *expresion, int *status) {
@@ -66,13 +69,25 @@ int exec_assign(ast *statement) {
   return status;
 }
 
-int exec_if(ast *statement) { return 1; }
+int exec_if(ast **statement) {
+  int status = 0;
+  int val = eval_expression((*statement)->rhs, &status);
+
+  printf("%d\n", val);
+
+  if (val && (*statement)->next_statement) {
+    *statement = (*statement)->next_statement;
+  } else if ((*statement)->next_statement &&
+             (*statement)->next_statement->next_statement) {
+    *statement = (*statement)->next_statement->next_statement;
+  }
+  return status;
+}
 
 int declare(ast *statement) {
   int status = 0;
   int val = eval_expression(statement->rhs, &status);
   insert(statement->value, val);
-  print_table();
   return status;
 }
 
@@ -85,7 +100,7 @@ int execute_statement(ast *statement) {
     declare(statement);
     break;
   case NODE_IF_CONDITION:
-    exec_if(statement);
+    exec_if(&statement);
     break;
   case NODE_ASSIGN:
     exec_assign(statement);
@@ -94,10 +109,14 @@ int execute_statement(ast *statement) {
     print("bad statement");
     return 1;
   }
+  if (!count) {
+    print_table();
+    count++;
+  }
 
   if (statement->next_statement != NULL) {
     return execute_statement(statement->next_statement);
   }
-
+  count = 0;
   return 0;
 }

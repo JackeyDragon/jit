@@ -26,8 +26,6 @@ int expect(enum token_type type) {
 }
 
 ast *parse_expression(int min_bp) {
-  printf("DEBUG parse_expression: called, min_bp=%d, current=%s\n", min_bp,
-         current ? current->value : "NULL");
   if (!current)
     return NULL;
   ast *lhs;
@@ -173,17 +171,12 @@ ast *parse_declaration_ast() {
 }
 
 ast *parse_if() {
-  printf("DEBUG parse_if: called, current token: %s\n",
-         current ? current->value : "NULL");
   if (!current || current->type != KEYWORD_IF)
     return NULL;
 
-  printf("DEBUG parse_if: after consuming IF, current token: %s\n",
-         current ? current->value : "NULL");
   ast *stmt_if = malloc(sizeof(ast));
   stmt_if->type = NODE_IF_CONDITION;
   stmt_if->value = "if";
-  printf("DEBUG parse_if: set NODE_IF_CONDITION, value=if\n");
 
   current = current->next;
   if (!current || current->type != BRACKET_OPEN)
