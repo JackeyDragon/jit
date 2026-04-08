@@ -1,4 +1,7 @@
 
+#ifndef TOKENIZER_H
+#define TOKENIZER_H
+
 enum token_type {
   IDENTIFYER,
   KEYWORD_VAR,
@@ -27,5 +30,7 @@ void print_tokens(struct token *head);
 struct token *tokinize(char *string);
 
 const char *token_type_to_string(enum token_type type);
+
+#endif
 
 #define print(string) printf("%s\n", string)

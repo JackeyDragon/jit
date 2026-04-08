@@ -1,3 +1,4 @@
+#include "ast.h"
 #include "symbol_table.h"
 #include "tokenizer.h"
 #include <stdbool.h>
@@ -6,10 +7,11 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-
 #define INPUT_BUF_SIZE 4096
 
 static struct termios orig_termios;
+struct ast *ast_head;
+struct ast *ast_tail;
 
 static void disable_raw_mode(void) {
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
@@ -70,6 +72,65 @@ int expect(enum token_type type) {
   }
 }
 
+ast *parse_expression(int min_bp) {
+  ast *lhs = malloc(sizeof(ast));
+  switch (current->type) {
+  case NUMBER:
+    lhs->type = NODE_NUMBER;
+    lhs->value = current->value;
+    break;
+  case NODE_BRACKET_OPEN:
+    lhs->type = NODE_BRACKET_OPEN;
+    lhs->value = current->value;
+    lhs = parse_expression(0);
+    if (!(current->next->type == BRACKET_CLOSE)) {
+      print("expected ), got bad token");
+      return NULL;
+    }
+    break;
+  default:
+    printf("bad token type\n");
+    print_tokens(current);
+    break;
+  }
+  current = current->next;
+
+  while (true) {
+    enum token_type op;
+    switch (current->type) {
+    case SEMICOLON:
+      break;
+    case BRACKET_CLOSE:
+      break;
+    case ADD:
+    case DIV:
+    case MULT:
+    case MINUS:
+    case AND:
+    case EQUAL:
+    case NOT_EQUAL:
+    case OR:
+      op = current->type;
+      break;
+    default:
+      print("bad operation");
+    }
+
+    binding_power power = get_binding_power(op);
+
+    if (power.left < min_bp) {
+      break;
+    }
+
+    current = current->next;
+    ast *rhs = parse_expression(power.right);
+    ast *tmp = lhs;
+    lhs = malloc(sizeof(ast));
+    lhs->type = token_type_to_ast_type(op);
+  }
+  return NULL;
+}
+
 int parse_declare() {
   if (expect(KEYWORD_VAR)) {
     printf("Error: expected 'var'\n");
@@ -85,11 +146,7 @@ int parse_declare() {
     printf("Error: expected '=' after identifier\n");
     return 1;
   }
-  struct token *val = current;
-  if (expect(NUMBER)) {
-    printf("Error: expected number after '='\n");
-    return 1;
-  }
+  struct ast *val = malloc(sizeof(struct ast));
 
   if (expect(SEMICOLON)) {
     printf("Error: expected ';' at end of declaration\n");

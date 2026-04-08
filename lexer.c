@@ -182,6 +182,18 @@ struct token *tokinize(char *string) {
       pos++;
 
       break;
+    } else if (strncmp(string + pos, "(", 1) == 0) {
+      token->type = BRACKET_OPEN;
+      token->value = strdup("(");
+      pos++;
+      break;
+    } else if (strncmp(string + pos, ")", 1) == 0) {
+      token->type = BRACKET_CLOSE;
+      token->value = strdup(")");
+      pos++;
+      break;
+    } else {
+      exit(1);
     }
   }
 
@@ -195,7 +207,7 @@ struct token *tokinize(char *string) {
 
 int main(int argc, char *argv[]) {
   struct token *head;
-  head = tokinize("a + b = 3 != 4 == 5");
+  head = tokinize("(a + b) = 3 != 4 == 5");
   print_tokens(head);
   return EXIT_SUCCESS;
 }
