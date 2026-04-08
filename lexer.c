@@ -204,10 +204,3 @@ struct token *tokinize(char *string) {
   }
   return token;
 }
-
-int main(int argc, char *argv[]) {
-  struct token *head;
-  head = tokinize("(a + b) = 3 != 4 == 5");
-  print_tokens(head);
-  return EXIT_SUCCESS;
-}

@@ -73,35 +73,47 @@ int expect(enum token_type type) {
 }
 
 ast *parse_expression(int min_bp) {
-  ast *lhs = malloc(sizeof(ast));
+  if (!current) return NULL;
+  ast *lhs;
+
   switch (current->type) {
   case NUMBER:
+    lhs = malloc(sizeof(ast));
     lhs->type = NODE_NUMBER;
     lhs->value = current->value;
+    lhs->lhs = NULL;
+    lhs->rhs = NULL;
+    current = current->next;
     break;
-  case NODE_BRACKET_OPEN:
-    lhs->type = NODE_BRACKET_OPEN;
+  case IDENTIFYER:
+    lhs = malloc(sizeof(ast));
+    lhs->type = NODE_IDENTIFIER;
     lhs->value = current->value;
+    lhs->lhs = NULL;
+    lhs->rhs = NULL;
+    current = current->next;
+    break;
+  case BRACKET_OPEN:
+    current = current->next;
     lhs = parse_expression(0);
-    if (!(current->next->type == BRACKET_CLOSE)) {
-      print("expected ), got bad token");
+    if (current->type != BRACKET_CLOSE) {
+      print("expected )");
       return NULL;
     }
+    current = current->next;
     break;
   default:
-    printf("bad token type\n");
-    print_tokens(current);
-    break;
+    printf("bad token type in prefix\n");
+    return NULL;
   }
-  current = current->next;
 
   while (true) {
+    if (!current) return lhs;
     enum token_type op;
     switch (current->type) {
     case SEMICOLON:
-      break;
     case BRACKET_CLOSE:
-      break;
+      return lhs;
     case ADD:
     case DIV:
     case MULT:
@@ -113,22 +125,23 @@ ast *parse_expression(int min_bp) {
       op = current->type;
       break;
     default:
-      print("bad operation");
+      return lhs;
     }
 
     binding_power power = get_binding_power(op);
-
     if (power.left < min_bp) {
-      break;
+      return lhs;
     }
 
     current = current->next;
     ast *rhs = parse_expression(power.right);
-    ast *tmp = lhs;
-    lhs = malloc(sizeof(ast));
-    lhs->type = token_type_to_ast_type(op);
+    ast *new_lhs = malloc(sizeof(ast));
+    new_lhs->type = token_type_to_ast_type(op);
+    new_lhs->lhs = lhs;
+    new_lhs->rhs = rhs;
+    new_lhs->value = token_type_to_string(op);
+    lhs = new_lhs;
   }
-  return NULL;
 }
 
 int parse_declare() {
@@ -210,20 +223,5 @@ int parse(char *input) {
     return -1;
   }
   print_table();
-  return 0;
-}
-
-int main(int argc, char *argv[]) {
-  while (1) {
-    char *input = readline("> ");
-    if (input == NULL) {
-      printf("Goodbye!\n");
-      break;
-    }
-    if (strlen(input) == 0) {
-      continue;
-    }
-    parse(input);
-  }
   return 0;
 }
