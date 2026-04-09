@@ -38,7 +38,12 @@ int eval_expression(ast *expresion, int *status) {
     return atoi(expresion->value);
   }
   if (expresion->type == NODE_REFERENCE) {
-    return get_entry_by_name(expresion->value)->val;
+    struct entry *entry = get_entry_by_name(expresion->value);
+    if (!entry) {
+      (*status) = 1;
+      return 0;
+    }
+    return entry->val;
   }
   if (expresion->type != NODE_EXPRESION && expresion->type != NODE_OPERATION) {
     (*status) = 1;
@@ -103,7 +108,7 @@ int exec_if() {
 
 int exec_goto() {
   int status = 0;
-  int line = eval_expression(current_statement->lhs, &status);
+  int line = eval_expression(current_statement->rhs, &status);
   code_line *tmp = head;
   while (tmp->line_count != line) {
     if (tmp->next == NULL)
@@ -168,6 +173,7 @@ int exec(ast *statement) {
   ast *clone = clone_ast(statement);
   current_statement = clone;
   current_line++;
+  init();
   if (initialized) {
     tail->next = malloc(sizeof(struct code_line));
     tail->next->line_count = tail->line_count + 1;
