@@ -15,6 +15,7 @@ typedef enum {
   NODE_KEYWORD,
   NODE_BRACKET_OPEN,
   NODE_BRACKET_CLOSE,
+  NODE_GOTO,
   NODE_ROOT
 } ast_type;
 

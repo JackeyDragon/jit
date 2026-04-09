@@ -4,29 +4,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 int execute_statement();
-int count = 0; // counts how many things have been executed. This way we print
-               // symbol_table only once
-
-// todo linked list of lines
 typedef struct code_line {
   ast *code;
   int line_count;
   struct code_line *next;
 } code_line;
 
+bool initialized = false;
 code_line *head;
 code_line *tail;
 ast *current_statement;
+int current_line = -1;
 
 int init() {
+  if (initialized)
+    return 0;
   head = malloc(sizeof(code_line));
   head->line_count = 0;
   head->code = current_statement;
   head->next = NULL;
   tail = head;
+  initialized = true;
   return 0;
 }
 
@@ -99,11 +101,35 @@ int exec_if() {
   return status;
 }
 
+int exec_goto() {
+  int status = 0;
+  int line = eval_expression(current_statement->lhs, &status);
+  code_line *tmp = head;
+  while (tmp->line_count != line) {
+    if (tmp->next == NULL)
+      return 1;
+    tmp = tmp->next;
+  }
+  current_statement = tmp->code;
+  current_line = line;
+  return status;
+}
+
 int declare() {
   int status = 0;
   int val = eval_expression(current_statement->rhs, &status);
   insert(current_statement->value, val);
   return status;
+}
+
+code_line *get_next_code_line(int i) {
+  code_line *tmp = head;
+  while (tmp->line_count != i + 1) {
+    if (tmp->next == NULL)
+      return NULL;
+    tmp = tmp->next;
+  }
+  return tmp;
 }
 
 int execute_statement() {
@@ -120,21 +146,34 @@ int execute_statement() {
   case NODE_ASSIGN:
     exec_assign();
     break;
+  case NODE_GOTO:
+    exec_goto();
+    break;
   default:
     print("bad statement");
     return 1;
   }
-
+  code_line *next_line = get_next_code_line(current_line);
   if (current_statement != NULL && current_statement->next_statement != NULL) {
     current_statement = current_statement->next_statement;
     return execute_statement();
+  } else if (next_line != NULL) {
+    current_statement = next_line->code;
+    current_line++;
   }
-  count = 0;
   return 0;
 }
 
 int exec(ast *statement) {
   ast *clone = clone_ast(statement);
   current_statement = clone;
+  current_line++;
+  if (initialized) {
+    tail->next = malloc(sizeof(struct code_line));
+    tail->next->line_count = tail->line_count + 1;
+    tail->next->code = clone;
+    tail->next->next = NULL;
+    tail = tail->next;
+  }
   return execute_statement();
 }
