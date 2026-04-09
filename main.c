@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "emiter.h"
+#include "symbol_table.h"
 #include "tokenizer.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -10,7 +11,8 @@
 extern struct token *current;
 extern ast *parse_expression(int min_bp);
 extern ast *parse_statement();
-extern void print_ast(ast *node, int depth);
+extern int exec(ast *statement);
+extern void print_all_lines();
 
 static struct termios orig_termios;
 
@@ -81,13 +83,19 @@ int main(int argc, char *argv[]) {
 
     struct token *head = tokinize(input);
     current = head;
+    if (strcmp(input, "list") == 0) {
+      print_all_lines();
+      input = NULL;
+      continue;
+    }
     ast *tree = parse_statement();
     if (!tree) {
       print("continue");
       input = NULL;
       continue;
     }
-    execute_statement(tree);
+    exec(tree);
+    print_table();
     input = NULL;
   }
   return EXIT_SUCCESS;

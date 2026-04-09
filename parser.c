@@ -98,6 +98,22 @@ ast *parse_expression(int min_bp) {
   }
 }
 
+ast *parse_goto() {
+  ast *ast_goto = malloc(sizeof(struct ast));
+  if (!current || current->type != KEYWORD_GOTO)
+    return NULL;
+  ast_goto->type = NODE_GOTO;
+  ast_goto->value = current->value;
+
+  current = current->next;
+
+  ast_goto->rhs = parse_expression(0);
+  ast_goto->lhs = NULL;
+  ast_goto->next_statement = NULL;
+
+  return ast_goto;
+}
+
 ast *parse_statement() {
   if (!current)
     return NULL;
@@ -120,6 +136,8 @@ ast *parse_statement() {
       }
     } else if (current->type == KEYWORD_IF) {
       stmt = parse_if();
+    } else if (current->type == KEYWORD_GOTO) {
+      stmt = parse_goto();
     }
 
     if (!stmt)

@@ -4,12 +4,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
-int execute_statement(ast *statement);
-int count = 0; // counts how many things have been executed. This way we print
-               // symbol_table only once
-int init() { return 0; }
+int execute_statement();
+char *print_statement(ast *node);
+
+typedef struct code_line {
+  ast *code;
+  int line_count;
+  struct code_line *next;
+} code_line;
+
+bool initialized = false;
+code_line *head;
+code_line *tail;
+ast *current_statement;
+int current_line = -1;
+
+int init() {
+  if (initialized)
+    return 0;
+  head = malloc(sizeof(code_line));
+  head->line_count = 0;
+  head->code = NULL;
+  head->next = NULL;
+  tail = head;
+  initialized = true;
+  return 0;
+}
 
 int eval_expression(ast *expresion, int *status) {
   (*status) = 0;
@@ -17,7 +40,12 @@ int eval_expression(ast *expresion, int *status) {
     return atoi(expresion->value);
   }
   if (expresion->type == NODE_REFERENCE) {
-    return get_entry_by_name(expresion->value)->val;
+    struct entry *entry = get_entry_by_name(expresion->value);
+    if (!entry) {
+      (*status) = 1;
+      return 0;
+    }
+    return entry->val;
   }
   if (expresion->type != NODE_EXPRESION && expresion->type != NODE_OPERATION) {
     (*status) = 1;
@@ -62,70 +90,178 @@ int eval_expression(ast *expresion, int *status) {
   return 0;
 }
 
-int exec_assign(ast *statement) {
+int exec_assign() {
   int status = 0;
-  int val = eval_expression(statement->rhs, &status);
-  set_entry_val(statement->lhs->value, val);
+  int val = eval_expression(current_statement->rhs, &status);
+  set_entry_val(current_statement->lhs->value, val);
   return status;
 }
 
-int exec_if(ast **statement) {
+int exec_if() {
   int status = 0;
-  int val = eval_expression((*statement)->rhs, &status);
-
-  printf("%d\n", val);
+  int val = eval_expression(current_statement->rhs, &status);
 
   if (val == 0) {
-    // condition false: skip the body by linking past it to what comes after
-    ast *body = (*statement)->next_statement;
-    if (body) {
-      (*statement)->next_statement = body->next_statement;
-    }
-  } else {
-    // condition true: execute the body by recursively calling execute_statement
-    ast *body = (*statement)->next_statement;
-    if (body) {
-      execute_statement(body);
-    }
+    ast *body = current_statement->next_statement;
+    current_statement = body ? body->next_statement : NULL;
   }
   return status;
 }
 
-int declare(ast *statement) {
+int exec_goto() {
   int status = 0;
-  int val = eval_expression(statement->rhs, &status);
-  insert(statement->value, val);
+  int line = eval_expression(current_statement->rhs, &status);
+  code_line *tmp = head;
+  while (tmp->line_count != line) {
+    if (tmp->next == NULL)
+      return 1;
+    tmp = tmp->next;
+  }
+  current_statement = tmp->code;
+  current_line = line;
   return status;
 }
 
-int execute_statement(ast *statement) {
-  switch (statement->type) {
+int declare() {
+  int status = 0;
+  int val = eval_expression(current_statement->rhs, &status);
+  insert(current_statement->value, val);
+  return status;
+}
+
+code_line *get_next_code_line(int i) {
+  code_line *tmp = head;
+  while (tmp->line_count != i + 1) {
+    if (tmp->next == NULL)
+      return NULL;
+    tmp = tmp->next;
+  }
+  return tmp;
+}
+
+int execute_statement() {
+  switch (current_statement->type) {
   case NODE_ROOT:
     init();
     break;
   case NODE_DECLAR:
-    declare(statement);
+    declare();
     break;
   case NODE_IF_CONDITION:
-    exec_if(&statement);
+    exec_if();
     break;
   case NODE_ASSIGN:
-    exec_assign(statement);
+    exec_assign();
     break;
-  case NODE_REFERENCE:
-    break;
+  case NODE_GOTO:
+    exec_goto();
+    return execute_statement();
   default:
     print("bad statement");
     return 1;
   }
-  if (!count) {
-    print_table();
-    count++;
+
+  code_line *next_line = get_next_code_line(current_line);
+  if (current_statement != NULL && current_statement->next_statement != NULL) {
+    current_statement = current_statement->next_statement;
+    return execute_statement();
+  } else if (next_line != NULL) {
+    current_statement = next_line->code;
+    current_line++;
+    return execute_statement();
+  }
+  return 0;
+}
+
+int exec(ast *statement) {
+  ast *clone = clone_ast(statement);
+  current_statement = clone;
+  init();
+  if (!head->code) {
+    head->code = clone;
+    head->line_count = 0;
+    current_line = 0;
+  } else {
+    tail->next = malloc(sizeof(struct code_line));
+    tail->next->line_count = tail->line_count + 1;
+    tail->next->code = clone;
+    tail->next->next = NULL;
+    tail = tail->next;
+    current_line = tail->line_count;
+  }
+  return execute_statement();
+}
+
+char *print_expr(ast *node) {
+  static char buf[256];
+  if (!node)
+    return "";
+
+  switch (node->type) {
+  case NODE_NUMBER:
+    return node->value;
+  case NODE_REFERENCE:
+    return node->value;
+  case NODE_OPERATION:
+  case NODE_EXPRESION: {
+    char *op = node->value;
+    char *l = print_expr(node->lhs);
+    char *r = print_expr(node->rhs);
+    snprintf(buf, sizeof(buf), "%s %s %s", l, op, r);
+    return buf;
+  }
+  default:
+    return "";
+  }
+}
+
+char *print_statement(ast *node) {
+  static char buf[1024];
+  buf[0] = '\0';
+
+  while (node) {
+    char stmt[256] = "";
+
+    switch (node->type) {
+    case NODE_DECLAR:
+      snprintf(stmt, sizeof(stmt), "var %s = %s",
+               node->value ? node->value : "", print_expr(node->rhs));
+      break;
+    case NODE_ASSIGN:
+      snprintf(stmt, sizeof(stmt), "%s = %s", print_expr(node->lhs),
+               print_expr(node->rhs));
+      break;
+    case NODE_IF_CONDITION: {
+      char *cond = print_expr(node->rhs);
+      snprintf(stmt, sizeof(stmt), "if (%s)", cond);
+      break;
+    }
+    case NODE_GOTO:
+      snprintf(stmt, sizeof(stmt), "goto %s", print_expr(node->rhs));
+      break;
+    default:
+      break;
+    }
+
+    if (buf[0] != '\0') {
+      strcat(buf, "; ");
+    }
+    strcat(buf, stmt);
+
+    node = node->next_statement;
   }
 
-  if (statement->next_statement != NULL) {
-    return execute_statement(statement->next_statement);
+  return buf;
+}
+
+void print_all_lines() {
+  if (!initialized || !head) {
+    return;
   }
-  count = 0;
-  return 0;
+
+  code_line *tmp = head;
+  while (tmp) {
+    printf("%d: %s\n", tmp->line_count, print_statement(tmp->code));
+    tmp = tmp->next;
+  }
 }

@@ -15,6 +15,7 @@ typedef enum {
   NODE_KEYWORD,
   NODE_BRACKET_OPEN,
   NODE_BRACKET_CLOSE,
+  NODE_GOTO,
   NODE_ROOT
 } ast_type;
 
@@ -33,5 +34,6 @@ typedef struct {
 
 binding_power get_binding_power(enum token_type type);
 ast_type token_type_to_ast_type(enum token_type type);
+ast *clone_ast(ast *source);
 
 #endif

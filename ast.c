@@ -40,6 +40,18 @@ ast_type token_type_to_ast_type(enum token_type type) {
   }
 }
 
+ast *clone_ast(ast *source) {
+  if (!source)
+    return NULL;
+  ast *ast_new = malloc(sizeof(struct ast));
+  ast_new->lhs = clone_ast(source->lhs);
+  ast_new->rhs = clone_ast(source->rhs);
+  ast_new->next_statement = clone_ast(source->next_statement);
+  ast_new->type = source->type;
+  ast_new->value = source->value ? strdup(source->value) : NULL;
+  return ast_new;
+}
+
 binding_power get_binding_power(enum token_type type) {
   switch (type) {
   case EQUAL:

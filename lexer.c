@@ -9,6 +9,8 @@ const char *token_type_to_string(enum token_type type) {
   switch (type) {
   case IDENTIFYER:
     return "IDENTIFIER";
+  case KEYWORD_GOTO:
+    return "KEYWORD_GOTO";
   case KEYWORD_VAR:
     return "KEYWORD_VAR";
   case KEYWORD_IF:
@@ -65,6 +67,8 @@ void is_keyword(struct token *token) {
     token->type = KEYWORD_VAR;
   } else if (strcmp(value, "if") == 0) {
     token->type = KEYWORD_IF;
+  } else if (strcmp(value, "goto") == 0) {
+    token->type = KEYWORD_GOTO;
   } else {
     token->type = IDENTIFYER;
   }
