@@ -140,7 +140,6 @@ code_line *get_next_code_line(int i) {
 }
 
 int execute_statement() {
-  print(print_statement(current_statement));
   switch (current_statement->type) {
   case NODE_ROOT:
     init();
@@ -167,7 +166,6 @@ int execute_statement() {
     current_statement = current_statement->next_statement;
     return execute_statement();
   } else if (next_line != NULL) {
-    print("executing next line");
     current_statement = next_line->code;
     current_line++;
     return execute_statement();
