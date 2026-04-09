@@ -92,8 +92,6 @@ int exec_if() {
   int status = 0;
   int val = eval_expression(current_statement->rhs, &status);
 
-  printf("%d\n", val);
-
   if (val == 0) {
     ast *body = current_statement->next_statement;
     current_statement = body ? body->next_statement : NULL;
