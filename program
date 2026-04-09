@@ -1,0 +1,7 @@
+var n = 4;
+var result = 1;
+
+result = result * n;
+n = n - 1;
+
+if (n != 0) goto 3;
