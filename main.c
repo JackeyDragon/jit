@@ -69,34 +69,68 @@ int main(int argc, char *argv[]) {
   char *input = NULL;
 
   if (argc > 1) {
-    input = argv[1];
-  }
+    FILE *fp;
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read;
 
-  while (1) {
-    if (input == NULL) {
-      input = readline("> ");
-      if (!input || strlen(input) == 0) {
-        printf("Goodbye!\n");
-        break;
+    fp = fopen(argv[1], "r");
+    if (fp == NULL)
+      exit(EXIT_FAILURE);
+
+    while ((read = getline(&line, &len, fp)) != -1) {
+      if (strlen(line) > 0 && line[strlen(line) - 1] == '\n')
+        line[strlen(line) - 1] = '\0';
+
+      struct token *head = tokinize(line);
+      current = head;
+      if (strcmp(line, "list") == 0) {
+        print_all_lines();
+        line = NULL;
+        continue;
       }
+      ast *tree = parse_statement();
+      if (!tree) {
+        print("continue");
+        line = NULL;
+        continue;
+      }
+      exec(tree);
     }
-
-    struct token *head = tokinize(input);
-    current = head;
-    if (strcmp(input, "list") == 0) {
-      print_all_lines();
-      input = NULL;
-      continue;
-    }
-    ast *tree = parse_statement();
-    if (!tree) {
-      print("continue");
-      input = NULL;
-      continue;
-    }
-    exec(tree);
     print_table();
-    input = NULL;
+    fclose(fp);
+    if (line)
+      free(line);
+
+  } else {
+
+    while (1) {
+      if (input == NULL) {
+        input = readline("> ");
+        if (!input || strlen(input) == 0) {
+          printf("Goodbye!\n");
+          break;
+        }
+      }
+
+      struct token *head = tokinize(input);
+      current = head;
+      if (strcmp(input, "list") == 0) {
+        print_all_lines();
+        input = NULL;
+        continue;
+      }
+      ast *tree = parse_statement();
+      if (!tree) {
+        print("continue");
+        input = NULL;
+        continue;
+      }
+      exec(tree);
+      print_table();
+      input = NULL;
+    }
   }
+
   return EXIT_SUCCESS;
 }
