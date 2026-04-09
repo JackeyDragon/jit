@@ -25,7 +25,7 @@ int init() {
     return 0;
   head = malloc(sizeof(code_line));
   head->line_count = 0;
-  head->code = current_statement;
+  head->code = NULL;
   head->next = NULL;
   tail = head;
   initialized = true;
@@ -172,14 +172,93 @@ int execute_statement() {
 int exec(ast *statement) {
   ast *clone = clone_ast(statement);
   current_statement = clone;
-  current_line++;
   init();
-  if (initialized) {
+  if (!head->code) {
+    head->code = clone;
+    head->line_count = 0;
+    current_line = 0;
+  } else {
     tail->next = malloc(sizeof(struct code_line));
     tail->next->line_count = tail->line_count + 1;
     tail->next->code = clone;
     tail->next->next = NULL;
     tail = tail->next;
+    current_line = tail->line_count;
   }
   return execute_statement();
+}
+
+char *print_expr(ast *node) {
+  static char buf[256];
+  if (!node) return "";
+
+  switch (node->type) {
+  case NODE_NUMBER:
+    return node->value;
+  case NODE_REFERENCE:
+    return node->value;
+  case NODE_OPERATION:
+  case NODE_EXPRESION: {
+    char *op = node->value;
+    char *l = print_expr(node->lhs);
+    char *r = print_expr(node->rhs);
+    snprintf(buf, sizeof(buf), "%s %s %s", l, op, r);
+    return buf;
+  }
+  default:
+    return "";
+  }
+}
+
+char *print_statement(ast *node) {
+  static char buf[1024];
+  buf[0] = '\0';
+
+  while (node) {
+    char stmt[256] = "";
+
+    switch (node->type) {
+    case NODE_DECLAR:
+      snprintf(stmt, sizeof(stmt), "var %s = %s",
+               node->value ? node->value : "",
+               print_expr(node->rhs));
+      break;
+    case NODE_ASSIGN:
+      snprintf(stmt, sizeof(stmt), "%s = %s",
+               print_expr(node->lhs),
+               print_expr(node->rhs));
+      break;
+    case NODE_IF_CONDITION: {
+      char *cond = print_expr(node->rhs);
+      snprintf(stmt, sizeof(stmt), "if (%s)", cond);
+      break;
+    }
+    case NODE_GOTO:
+      snprintf(stmt, sizeof(stmt), "goto %s", print_expr(node->rhs));
+      break;
+    default:
+      break;
+    }
+
+    if (buf[0] != '\0') {
+      strcat(buf, "; ");
+    }
+    strcat(buf, stmt);
+
+    node = node->next_statement;
+  }
+
+  return buf;
+}
+
+void print_all_lines() {
+  if (!initialized || !head) {
+    return;
+  }
+
+  code_line *tmp = head;
+  while (tmp) {
+    printf("%d: %s\n", tmp->line_count, print_statement(tmp->code));
+    tmp = tmp->next;
+  }
 }

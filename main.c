@@ -12,6 +12,7 @@ extern struct token *current;
 extern ast *parse_expression(int min_bp);
 extern ast *parse_statement();
 extern int exec(ast *statement);
+extern void print_all_lines();
 
 static struct termios orig_termios;
 
@@ -82,6 +83,11 @@ int main(int argc, char *argv[]) {
 
     struct token *head = tokinize(input);
     current = head;
+    if (strcmp(input, "list") == 0) {
+      print_all_lines();
+      input = NULL;
+      continue;
+    }
     ast *tree = parse_statement();
     if (!tree) {
       print("continue");
