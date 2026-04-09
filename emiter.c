@@ -8,6 +8,8 @@
 #include <unistd.h>
 
 int execute_statement();
+char *print_statement(ast *node);
+
 typedef struct code_line {
   ast *code;
   int line_count;
@@ -138,6 +140,7 @@ code_line *get_next_code_line(int i) {
 }
 
 int execute_statement() {
+  print(print_statement(current_statement));
   switch (current_statement->type) {
   case NODE_ROOT:
     init();
@@ -153,18 +156,21 @@ int execute_statement() {
     break;
   case NODE_GOTO:
     exec_goto();
-    break;
+    return execute_statement();
   default:
     print("bad statement");
     return 1;
   }
+
   code_line *next_line = get_next_code_line(current_line);
   if (current_statement != NULL && current_statement->next_statement != NULL) {
     current_statement = current_statement->next_statement;
     return execute_statement();
   } else if (next_line != NULL) {
+    print("executing next line");
     current_statement = next_line->code;
     current_line++;
+    return execute_statement();
   }
   return 0;
 }
@@ -190,7 +196,8 @@ int exec(ast *statement) {
 
 char *print_expr(ast *node) {
   static char buf[256];
-  if (!node) return "";
+  if (!node)
+    return "";
 
   switch (node->type) {
   case NODE_NUMBER:
@@ -220,12 +227,10 @@ char *print_statement(ast *node) {
     switch (node->type) {
     case NODE_DECLAR:
       snprintf(stmt, sizeof(stmt), "var %s = %s",
-               node->value ? node->value : "",
-               print_expr(node->rhs));
+               node->value ? node->value : "", print_expr(node->rhs));
       break;
     case NODE_ASSIGN:
-      snprintf(stmt, sizeof(stmt), "%s = %s",
-               print_expr(node->lhs),
+      snprintf(stmt, sizeof(stmt), "%s = %s", print_expr(node->lhs),
                print_expr(node->rhs));
       break;
     case NODE_IF_CONDITION: {
