@@ -69,3 +69,22 @@ void print_table() {
 
   return;
 }
+
+int lookup(char *name) {
+  struct entry *entry = get_entry_by_name(name);
+  if (entry) {
+    return entry->val;
+  }
+  return 0;
+}
+
+void reset_table() {
+  struct entry *current = head;
+  while (current != NULL) {
+    struct entry *next = current->next;
+    free(current->name);
+    free(current);
+    current = next;
+  }
+  head = NULL;
+}

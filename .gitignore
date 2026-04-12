@@ -1,1 +1,7 @@
-*.o
+src/*.o
+bin/
+tests/test_lexer
+tests/test_parser
+tests/test_integration
+tests/test_benchmark
+benchmark_results.jsonl

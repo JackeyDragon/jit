@@ -140,35 +140,40 @@ code_line *get_next_code_line(int i) {
 }
 
 int execute_statement() {
-  switch (current_statement->type) {
-  case NODE_ROOT:
-    init();
-    break;
-  case NODE_DECLAR:
-    declare();
-    break;
-  case NODE_IF_CONDITION:
-    exec_if();
-    break;
-  case NODE_ASSIGN:
-    exec_assign();
-    break;
-  case NODE_GOTO:
-    exec_goto();
-    return execute_statement();
-  default:
-    print("bad statement");
-    return 1;
-  }
+  while (1) {
+    switch (current_statement->type) {
+    case NODE_ROOT:
+      init();
+      break;
+    case NODE_DECLAR:
+      declare();
+      break;
+    case NODE_IF_CONDITION:
+      exec_if();
+      break;
+    case NODE_ASSIGN:
+      exec_assign();
+      break;
+    case NODE_GOTO:
+      exec_goto();
+      continue;
+    default:
+      print("bad statement");
+      return 1;
+    }
 
-  code_line *next_line = get_next_code_line(current_line);
-  if (current_statement != NULL && current_statement->next_statement != NULL) {
-    current_statement = current_statement->next_statement;
-    return execute_statement();
-  } else if (next_line != NULL) {
-    current_statement = next_line->code;
-    current_line++;
-    return execute_statement();
+    code_line *next_line = get_next_code_line(current_line);
+    if (current_statement != NULL &&
+        current_statement->next_statement != NULL) {
+      current_statement = current_statement->next_statement;
+      continue;
+    } else if (next_line != NULL) {
+      current_statement = next_line->code;
+      current_line++;
+      continue;
+    } else {
+      break;
+    }
   }
   return 0;
 }
