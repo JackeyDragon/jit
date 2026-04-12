@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "symbol_table.h"
+#include "types.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,13 +35,13 @@ int init() {
   return 0;
 }
 
-int eval_expression(ast *expresion, int *status) {
+value eval_expression(ast *expresion, int *status) {
   (*status) = 0;
   if (expresion->type == NODE_NUMBER) {
     return atoi(expresion->value);
   }
   if (expresion->type == NODE_REFERENCE) {
-    struct entry *entry = get_entry_by_name(expresion->value);
+    struct entry *entry = lookup(expresion->value);
     if (!entry) {
       (*status) = 1;
       return 0;

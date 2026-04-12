@@ -1,12 +1,9 @@
+#include "types.h"
 
-struct entry {
-  char *name;
-  int val;
-  struct entry *next;
-};
-void print_table();
-int insert(char *name, int val);
-struct entry *get_entry_by_name(char *name);
-int set_entry_val(char *name, int value);
-int lookup(char *name);
+void init_table();
 void reset_table();
+void print_table();
+value *lookup(char *name);
+int insert(char *name, value *val);
+int enter(char *name);
+int leave();
