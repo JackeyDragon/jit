@@ -35,25 +35,19 @@ ast *parse_expression(int min_bp) {
   case LITERAL_FLOAT:
     lhs = malloc(sizeof(ast));
     lhs->type = NODE_FLOAT;
-    lhs->value = current->value;
-    lhs->lhs = NULL;
-    lhs->rhs = NULL;
+    lhs->data.LITTERAL.value = current->value;
     current = current->next;
     break;
   case LITERAL_INT:
     lhs = malloc(sizeof(ast));
     lhs->type = NODE_INT;
     lhs->value = current->value;
-    lhs->lhs = NULL;
-    lhs->rhs = NULL;
     current = current->next;
     break;
   case IDENTIFYER:
     lhs = malloc(sizeof(ast));
-    lhs->type = NODE_REFERENCE;
-    lhs->value = current->value;
-    lhs->lhs = NULL;
-    lhs->rhs = NULL;
+    lhs->type = NODE_IDENTIFYER;
+    lhs->data.IDENTIFYER.name = current->value;
     current = current->next;
     break;
   case BRACKET_OPEN:
@@ -100,9 +94,9 @@ ast *parse_expression(int min_bp) {
     ast *rhs = parse_expression(power.right);
     ast *new_lhs = malloc(sizeof(ast));
     new_lhs->type = token_type_to_ast_type(op);
-    new_lhs->lhs = lhs;
-    new_lhs->rhs = rhs;
-    new_lhs->value = strdup(token_type_to_string(op));
+    new_lhs->data.EXPRESSION.lhs = lhs;
+    new_lhs->data.EXPRESSION.rhs = rhs;
+    new_lhs->data.EXPRESSION.operaton = ADD;
     lhs = new_lhs;
   }
 }
@@ -112,12 +106,10 @@ ast *parse_goto() {
   if (!current || current->type != KEYWORD_GOTO)
     return NULL;
   ast_goto->type = NODE_GOTO;
-  ast_goto->value = current->value;
 
   current = current->next;
 
-  ast_goto->rhs = parse_expression(0);
-  ast_goto->lhs = NULL;
+  ast_goto->data.GOTO.expression = parse_expression(0);
   ast_goto->next_statement = NULL;
 
   return ast_goto;
@@ -266,9 +258,8 @@ ast *parse_assignment_ast() {
 
   ast *assign = malloc(sizeof(ast));
   assign->type = NODE_ASSIGN;
-  assign->lhs = ident;
-  assign->rhs = parse_expression(0);
-  assign->value = NULL;
+  assign->data.ASSIGN.identifyer = name;
+  assign->data.ASSIGN.expression = parse_expression(0);
   assign->next_statement = NULL;
 
   return assign;

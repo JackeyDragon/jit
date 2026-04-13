@@ -14,7 +14,7 @@ extern ast *parse_expression(int min_bp);
 ast_type token_type_to_ast_type(enum token_type type) {
   switch (type) {
   case IDENTIFYER:
-    return NODE_REFERENCE;
+    return NODE_IDENTIFYER;
   case LITERAL_INT:
     return NODE_INT;
   case LITERAL_FLOAT:
@@ -59,7 +59,7 @@ ast *clone_ast(ast *source) {
   case NODE_FLOAT:
     ast_new->data.LITTERAL = source->data.LITTERAL;
     break;
-  case NODE_REFERENCE:
+  case NODE_IDENTIFYER:
     ast_new->data.IDENTIFYER.name = source->data.IDENTIFYER.name
                                         ? strdup(source->data.IDENTIFYER.name)
                                         : NULL;
@@ -154,8 +154,8 @@ void print_ast(ast *node, int depth) {
   case NODE_BLOCK:
     printf("BLOCK (%d statements)\n", node->data.BLOCK.count);
     break;
-  case NODE_REFERENCE:
-    printf("REFERENCE: %s\n", node->data.IDENTIFYER.name);
+  case NODE_IDENTIFYER:
+    printf("IDENTIFYER: %s\n", node->data.IDENTIFYER.name);
     break;
   case NODE_ARRAY_ACCESS:
     printf("ARRAY_ACCESS: %s\n", node->data.IDENTIFYER.name);
