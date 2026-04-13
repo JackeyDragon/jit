@@ -53,8 +53,6 @@ void reset_table() {
 }
 
 int insert(char *name, value *val) {
-  if (lookup(name))
-    return -1;
   value_map_insert(&root_table, name, val);
   return 0;
 }
@@ -84,7 +82,11 @@ void print_table() {
   printf("=== Root Table ===\n");
   for (value_map_itr it = value_map_first(&root_table); !value_map_is_end(it);
        it = value_map_next(it)) {
-    printf("[%s: %d]\n", it.data->key, it.data->val->value.i);
+    if (it.data->val->type == FLOAT) {
+      printf("[%s: float %f]\n", it.data->key, it.data->val->value.f);
+    } else {
+      printf("[%s: int %d]\n", it.data->key, it.data->val->value.i);
+    }
   }
 
   printf("=== Scope Stack ===\n");
@@ -97,7 +99,11 @@ void print_table() {
       symbol *arr = (symbol *)block->array;
       for (int i = 0; i < block->size; i++) {
         if (arr[i].name) {
-          printf("  [%s: %d]\n", arr[i].name, arr[i].value.value.i);
+          if (arr[i].value.type == FLOAT) {
+            printf("  [%s: float %f]\n", arr[i].name, arr[i].value.value.f);
+          } else {
+            printf("  [%s: int %d]\n", arr[i].name, arr[i].value.value.i);
+          }
         }
       }
     }

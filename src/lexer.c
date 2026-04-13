@@ -21,6 +21,10 @@ const char *token_type_to_string(enum token_type type) {
     return "LITERAL_INT";
   case LITERAL_FLOAT:
     return "LITERAL_FLOAT";
+  case TYPE_INT:
+    return "TYPE_INT";
+  case TYPE_FLOAT:
+    return "TYPE_FLOAT";
   case SEMICOLON:
     return "SEMICOLON";
   case ADD:
@@ -69,8 +73,6 @@ void is_keyword(struct token *token) {
     token->type = TYPE_FLOAT;
   } else if (strcmp(value, "int") == 0) {
     token->type = TYPE_INT;
-  } else if (strcmp(value, "var") == 0) {
-    token->type = KEYWORD_VAR;
   } else if (strcmp(value, "if") == 0) {
     token->type = KEYWORD_IF;
   } else if (strcmp(value, "goto") == 0) {

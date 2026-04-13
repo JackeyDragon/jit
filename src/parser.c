@@ -129,7 +129,7 @@ ast *parse_statement() {
   while (current) {
     ast *stmt = NULL;
 
-    if (current->type == KEYWORD_VAR) {
+    if (current->type == TYPE_INT || current->type == TYPE_FLOAT) {
       stmt = parse_declaration_ast();
     } else if (current->type == IDENTIFYER) {
       struct token *peek = current->next;
@@ -180,10 +180,12 @@ ast *pasre_type() {
   case TYPE_FLOAT:
     type->data.TYPE.type = FLOAT;
     type->data.TYPE.rhs = NULL;
+    current = current->next;
     break;
   case TYPE_INT:
     type->data.TYPE.type = INT;
     type->data.TYPE.rhs = NULL;
+    current = current->next;
     break;
   default:
     free(type);

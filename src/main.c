@@ -1,4 +1,5 @@
 #include "ast.h"
+#include "code.h"
 #include "emiter.h"
 #include "symbol_table.h"
 #include "tokenizer.h"
@@ -8,11 +9,11 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+
 extern struct token *current;
 extern ast *parse_expression(int min_bp);
 extern ast *parse_statement();
 extern int exec(ast *statement);
-extern void print_all_lines();
 
 static struct termios orig_termios;
 
@@ -67,6 +68,8 @@ static char *readline(char *prompt) {
 
 int main(int argc, char *argv[]) {
   char *input = NULL;
+  init_table();
+  code_init();
 
   if (argc > 1) {
     FILE *fp;
@@ -82,16 +85,17 @@ int main(int argc, char *argv[]) {
       if (strlen(line) > 0 && line[strlen(line) - 1] == '\n')
         line[strlen(line) - 1] = '\0';
 
-      struct token *head = tokinize(line);
-      current = head;
       if (strcmp(line, "list") == 0) {
-        print_all_lines();
+        code_print_all();
         line = NULL;
         continue;
       }
+      struct token *head = tokinize(line);
+      current = head;
+
       ast *tree = parse_statement();
       if (!tree) {
-        print("continue");
+        printf("continue\n");
         line = NULL;
         continue;
       }
@@ -114,15 +118,16 @@ int main(int argc, char *argv[]) {
       }
 
       struct token *head = tokinize(input);
+      print_tokens(head);
       current = head;
       if (strcmp(input, "list") == 0) {
-        print_all_lines();
+        code_print_all();
         input = NULL;
         continue;
       }
       ast *tree = parse_statement();
       if (!tree) {
-        print("continue");
+        printf("continue\n");
         input = NULL;
         continue;
       }
