@@ -32,18 +32,22 @@ ast *parse_expression(int min_bp) {
   ast *lhs;
 
   switch (current->type) {
-  case LITERAL_FLOAT:
+  case LITERAL_FLOAT: {
     lhs = malloc(sizeof(ast));
     lhs->type = NODE_FLOAT;
-    lhs->data.LITTERAL.value = current->value;
+    lhs->data.LITTERAL.value.type = FLOAT;
+    lhs->data.LITTERAL.value.value.f = atof(current->value);
     current = current->next;
     break;
-  case LITERAL_INT:
+  }
+  case LITERAL_INT: {
     lhs = malloc(sizeof(ast));
     lhs->type = NODE_INT;
-    lhs->value = current->value;
+    lhs->data.LITTERAL.value.type = INT;
+    lhs->data.LITTERAL.value.value.i = atoi(current->value);
     current = current->next;
     break;
+  }
   case IDENTIFYER:
     lhs = malloc(sizeof(ast));
     lhs->type = NODE_IDENTIFYER;
@@ -96,7 +100,7 @@ ast *parse_expression(int min_bp) {
     new_lhs->type = token_type_to_ast_type(op);
     new_lhs->data.EXPRESSION.lhs = lhs;
     new_lhs->data.EXPRESSION.rhs = rhs;
-    new_lhs->data.EXPRESSION.operaton = ADD;
+    new_lhs->data.EXPRESSION.operaton = op;
     lhs = new_lhs;
   }
 }
@@ -173,12 +177,14 @@ ast *pasre_type() {
   ast *type = malloc(sizeof(ast));
   type->type = NODE_TYPE;
   switch (current->type) {
-  case LITERAL_FLOAT:
+  case TYPE_FLOAT:
     type->data.TYPE.type = FLOAT;
     type->data.TYPE.rhs = NULL;
-  case LITERAL_INT:
+    break;
+  case TYPE_INT:
     type->data.TYPE.type = INT;
     type->data.TYPE.rhs = NULL;
+    break;
   default:
     free(type);
     return NULL;
@@ -200,17 +206,19 @@ ast *pasre_identifyer() {
 
 ast *parse_declaration_ast() {
   ast *type = pasre_type();
-  if (!current || !type)
+  if (!type)
     return NULL;
 
-  current = current->next;
   ast *name = pasre_identifyer();
-  if (!current)
+  if (!name) {
+    free(type);
     return NULL;
+  }
 
   ast *decl = malloc(sizeof(ast));
   decl->type = NODE_DECLAR;
-  decl->data.DECLARE.identifyer = type;
+  decl->data.DECLARE.type = type->data.TYPE.type;
+  decl->data.DECLARE.identifyer = name;
 
   if (!current || current->type != TOKEN_ASSIGN) {
     free(name);
@@ -223,6 +231,7 @@ ast *parse_declaration_ast() {
   decl->data.DECLARE.expression = parse_expression(0);
   decl->next_statement = NULL;
 
+  free(type);
   return decl;
 }
 
@@ -238,7 +247,8 @@ ast *parse_if() {
     return NULL;
 
   stmt_if->data.IF.condition = parse_expression(0);
-  stmt_if->next_statement = parse_statement(); // future after body
+  stmt_if->data.IF.if_body = parse_statement();
+  stmt_if->data.IF.else_body = NULL;
 
   return stmt_if;
 }
@@ -247,10 +257,6 @@ ast *parse_assignment_ast() {
   ast *name = pasre_identifyer();
   if (!current || !name)
     return NULL;
-  ast *ident = malloc(sizeof(ast));
-  ident->type = NODE_IDENTIFYER;
-  ident->data.ASSIGN.identifyer = name;
-  current = current->next;
 
   if (!current || current->type != TOKEN_ASSIGN)
     return NULL;
