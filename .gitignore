@@ -5,3 +5,4 @@ tests/test_parser
 tests/test_integration
 tests/test_benchmark
 benchmark_results.jsonl
+compile_commands.json
