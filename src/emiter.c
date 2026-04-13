@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 static ast *current_statement = NULL;
 
@@ -171,8 +172,7 @@ int exec_assign() {
            existing->type == FLOAT ? "float" : "int", name);
     return 1;
   }
-  value *val = valuedup(&tmp);
-  insert(name, val);
+  overwrite_value(tmp, existing);
   return status;
 }
 
@@ -182,10 +182,8 @@ int exec_if() {
   value *val = valuedup(&tmp);
 
   if (val->value.i == 0) {
-    print("if is false so modifying next statement");
     current_statement = current_statement->next_statement;
   }
-  print("if is true, so not modifying next statement");
   return status;
 }
 
@@ -193,18 +191,17 @@ int exec_goto() {
   int status = 0;
   value tmp = eval_expression(current_statement->data.GOTO.expression, &status);
   if (tmp.type != INT) {
-    print("goto needs int");
+    printf("error: goto requires int\n");
     return 1;
   }
   int line = tmp.value.i;
   ast *line_code = code_get_line(line);
   if (!line_code) {
-    print("error");
+    printf("error: invalid goto target\n");
     return 1;
   }
   set_current_line(line);
   current_statement = line_code;
-  printf("current line number after goto is %d", code_get_current_line());
   return status;
 }
 

@@ -14,4 +14,5 @@ typedef struct value {
 } value;
 
 value *valuedup(value *value);
+void overwrite_value(value src, value *target);
 #endif // !TYPES_H

@@ -132,9 +132,6 @@ int main(int argc, char *argv[]) {
         continue;
       }
 
-      // Debug: print the AST before executing
-      printf("DEBUG: parsed AST: %s\n", code_print_statement(tree));
-
       // todo semantic analysis
       exec(tree);
       print_table();

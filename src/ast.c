@@ -76,10 +76,12 @@ ast *clone_ast(ast *source) {
     ast_new->data.DECLARE.type = source->data.DECLARE.type;
     ast_new->data.DECLARE.expression =
         clone_ast(source->data.DECLARE.expression);
+    ast_new->next_statement = clone_ast(source->next_statement);
     break;
   case NODE_ASSIGN:
     ast_new->data.ASSIGN.identifyer = clone_ast(source->data.ASSIGN.identifyer);
     ast_new->data.ASSIGN.expression = clone_ast(source->data.ASSIGN.expression);
+    ast_new->next_statement = clone_ast(source->next_statement);
     break;
   case NODE_IF_CONDITION:
     ast_new->data.IF.condition = clone_ast(source->data.IF.condition);

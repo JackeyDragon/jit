@@ -60,32 +60,32 @@ ast *code_get_line(int line_number) {
 }
 
 int code_get_current_line(void) {
-  printf("%d", current_line);
   return current_line;
 }
 int set_current_line(int line) {
-  printf("setting current_line to %d", line);
   current_line = line;
   return 0;
 }
-char *code_print_expr_rec(ast *node, int depth);
-char *code_print_expr(ast *node) { return code_print_expr_rec(node, 0); }
 
-char *code_print_expr_rec(ast *node, int depth) {
-  // Use two buffers alternating based on depth to avoid overwrites in recursion
-  static char buf0[256];
-  static char buf1[256];
-  char *buf = (depth % 2 == 0) ? buf0 : buf1;
+static char *print_expr_rec(ast *node, int depth);
+
+char *code_print_expr(ast *node) {
+  return print_expr_rec(node, 0);
+}
+
+static char *print_expr_rec(ast *node, int depth) {
+  static char buf[256];
+  buf[0] = '\0';
 
   if (!node)
     return "";
 
   switch (node->type) {
   case NODE_INT:
-    snprintf(buf, sizeof(buf), "%d", node->data.LITTERAL.value.value.i);
+    snprintf(buf, 256, "%d", node->data.LITTERAL.value.value.i);
     return buf;
   case NODE_FLOAT:
-    snprintf(buf, sizeof(buf), "%f", node->data.LITTERAL.value.value.f);
+    snprintf(buf, 256, "%f", node->data.LITTERAL.value.value.f);
     return buf;
   case NODE_IDENTIFYER:
     return node->data.IDENTIFYER.name;
@@ -93,41 +93,27 @@ char *code_print_expr_rec(ast *node, int depth) {
   case NODE_EXPRESION: {
     char *op_str = "";
     switch (node->data.EXPRESSION.operaton) {
-    case ADD:
-      op_str = "+";
-      break;
-    case MINUS:
-      op_str = "-";
-      break;
-    case MULT:
-      op_str = "*";
-      break;
-    case DIV:
-      op_str = "/";
-      break;
-    case AND:
-      op_str = "&&";
-      break;
-    case OR:
-      op_str = "||";
-      break;
-    case EQUAL:
-      op_str = "==";
-      break;
-    case NOT_EQUAL:
-      op_str = "!=";
-      break;
-    default:
-      op_str = "?";
-      break;
+    case ADD: op_str = "+"; break;
+    case MINUS: op_str = "-"; break;
+    case MULT: op_str = "*"; break;
+    case DIV: op_str = "/"; break;
+    case AND: op_str = "&&"; break;
+    case OR: op_str = "||"; break;
+    case EQUAL: op_str = "=="; break;
+    case NOT_EQUAL: op_str = "!="; break;
+    default: op_str = "?"; break;
     }
-    char *l = code_print_expr_rec(node->data.EXPRESSION.lhs, depth + 1);
-    char *r = code_print_expr_rec(node->data.EXPRESSION.rhs, depth + 1);
-    snprintf(buf, sizeof(buf), "%s %s %s", l, op_str, r);
+    // Use local variables to hold string results before composing
+    char lhs_result[128];
+    char rhs_result[128];
+    snprintf(lhs_result, 128, "%s", print_expr_rec(node->data.EXPRESSION.lhs, depth + 1));
+    snprintf(rhs_result, 128, "%s", print_expr_rec(node->data.EXPRESSION.rhs, depth + 1));
+    snprintf(buf, 256, "%s %s %s", lhs_result, op_str, rhs_result);
     return buf;
   }
   default:
-    return "";
+    snprintf(buf, 256, "<expr>");
+    return buf;
   }
 }
 
@@ -146,19 +132,17 @@ char *code_print_statement(ast *node) {
                code_print_expr(node->data.DECLARE.expression));
       break;
     }
-    case NODE_ASSIGN:
-      snprintf(stmt, sizeof(stmt), "%s = %s",
-               code_print_expr(node->data.ASSIGN.identifyer),
-               code_print_expr(node->data.ASSIGN.expression));
+    case NODE_ASSIGN: {
+      char lhs[256];
+      char rhs[256];
+      snprintf(lhs, sizeof(lhs), "%s", code_print_expr(node->data.ASSIGN.identifyer));
+      snprintf(rhs, sizeof(rhs), "%s", code_print_expr(node->data.ASSIGN.expression));
+      snprintf(stmt, sizeof(stmt), "%s = %s", lhs, rhs);
       break;
+    }
     case NODE_IF_CONDITION: {
       char *cond = code_print_expr(node->data.IF.condition);
-      if (node->next_statement) {
-        char *body = code_print_expr(node->next_statement);
-        snprintf(stmt, sizeof(stmt), "if (%s) %s", cond, body);
-      } else {
-        snprintf(stmt, sizeof(stmt), "if (%s)", cond);
-      }
+      snprintf(stmt, sizeof(stmt), "if (%s)", cond);
       break;
     }
     case NODE_GOTO:
@@ -166,12 +150,12 @@ char *code_print_statement(ast *node) {
                code_print_expr(node->data.GOTO.expression));
       break;
     default:
+      snprintf(stmt, sizeof(stmt), "<stmt>");
       break;
     }
 
-    if (buf[0] != '\0') {
+    if (buf[0] != '\0')
       strcat(buf, "; ");
-    }
     strcat(buf, stmt);
 
     node = node->next_statement;
@@ -181,9 +165,8 @@ char *code_print_statement(ast *node) {
 }
 
 void code_print_all(void) {
-  if (!initialized || !head) {
+  if (!initialized || !head)
     return;
-  }
 
   code_line *tmp = head;
   while (tmp) {

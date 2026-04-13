@@ -9,3 +9,9 @@ value *valuedup(value *value) {
   tmp->type = value->type;
   return tmp;
 }
+
+void overwrite_value(value src, value *target) {
+  target->value = src.value;
+  target->size = src.size;
+  target->type = src.type;
+}
