@@ -17,8 +17,10 @@ const char *token_type_to_string(enum token_type type) {
     return "KEYWORD_IF";
   case TOKEN_ASSIGN:
     return "TOKEN_ASSIGN";
-  case NUMBER:
-    return "NUMBER";
+  case LITERAL_INT:
+    return "LITERAL_INT";
+  case LITERAL_FLOAT:
+    return "LITERAL_FLOAT";
   case SEMICOLON:
     return "SEMICOLON";
   case ADD:

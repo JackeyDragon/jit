@@ -1,7 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-typedef enum build_in_types { INT, FLOAT, ARRAY } build_in_types;
+#define ERROR_VALUE (value){.type = ERROR, .size = -1, .value.i = -1}
+typedef enum build_in_types { INT, FLOAT, ARRAY, ERROR } build_in_types;
 typedef struct value {
   build_in_types type;
   int size;

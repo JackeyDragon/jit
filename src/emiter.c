@@ -37,99 +37,109 @@ int init() {
 
 value eval_expression(ast *expresion, int *status) {
   (*status) = 0;
-  if (expresion->type == NODE_INT) {
-    return (value){.type = INT, .value = atoi(expresion->value)};
+  if (expresion->type == NODE_INT || expresion->type == NODE_FLOAT) {
+    return expresion->data.LITTERAL.value;
   }
-  if (expresion->type == NODE_REFERENCE) {
-    struct entry *entry = lookup(expresion->value);
-    if (!entry) {
+  if (expresion->type == NODE_IDENTIFYER) {
+    value *val = lookup(expresion->data.IDENTIFYER.name);
+    if (!val) {
       (*status) = 1;
-      return 0;
+      return ERROR_VALUE;
     }
-    return entry->val;
+    return *val;
   }
   if (expresion->type != NODE_EXPRESION && expresion->type != NODE_OPERATION) {
     (*status) = 1;
-    return 0;
+    return ERROR_VALUE;
   }
 
-  ast *expr = expresion->type == NODE_OPERATION ? expresion : expresion->lhs;
+  ast *expr = expresion->type == NODE_OPERATION
+                  ? expresion
+                  : expresion->data.EXPRESSION.lhs;
 
-  if (strcmp(expr->value, "ADD") == 0) {
-    return eval_expression(expr->lhs, status) +
-           eval_expression(expr->rhs, status);
+  if (expr->data.EXPRESSION.operaton == ADD) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    return (value){.type = INT, .size = sizeof(int), .value.i = lhs.value.i + rhs.value.i};
   }
-  if (strcmp(expr->value, "MINUS") == 0) {
-    return eval_expression(expr->lhs, status) -
-           eval_expression(expr->rhs, status);
+  if (expr->data.EXPRESSION.operaton == MINUS) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    return (value){.type = INT, .size = sizeof(int), .value.i = lhs.value.i - rhs.value.i};
   }
-  if (strcmp(expr->value, "MULT") == 0) {
-    return eval_expression(expr->lhs, status) *
-           eval_expression(expr->rhs, status);
+  if (expr->data.EXPRESSION.operaton == MULT) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    return (value){.type = INT, .size = sizeof(int), .value.i = lhs.value.i * rhs.value.i};
   }
-  if (strcmp(expr->value, "DIV") == 0) {
-    return eval_expression(expr->lhs, status) /
-           eval_expression(expr->rhs, status);
+  if (expr->data.EXPRESSION.operaton == DIV) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    return (value){.type = INT, .size = sizeof(int), .value.i = lhs.value.i / rhs.value.i};
   }
-  if (strcmp(expr->value, "AND") == 0) {
-    return eval_expression(expr->lhs, status) &&
-           eval_expression(expr->rhs, status);
+  if (expr->data.EXPRESSION.operaton == AND) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    return (value){.type = INT, .size = sizeof(int), .value.i = lhs.value.i && rhs.value.i};
   }
-  if (strcmp(expr->value, "OR") == 0) {
-    return eval_expression(expr->lhs, status) ||
-           eval_expression(expr->rhs, status);
+  if (expr->data.EXPRESSION.operaton == OR) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    return (value){.type = INT, .size = sizeof(int), .value.i = lhs.value.i || rhs.value.i};
   }
-  if (strcmp(expr->value, "EQUAL") == 0) {
-    return eval_expression(expr->lhs, status) ==
-           eval_expression(expr->rhs, status);
+  if (expr->data.EXPRESSION.operaton == EQUAL) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    return (value){.type = INT, .size = sizeof(int), .value.i = lhs.value.i == rhs.value.i};
   }
-  if (strcmp(expr->value, "NOT_EQUAL") == 0) {
-    return eval_expression(expr->lhs, status) !=
-           eval_expression(expr->rhs, status);
+  if (expr->data.EXPRESSION.operaton == NOT_EQUAL) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    return (value){.type = INT, .size = sizeof(int), .value.i = lhs.value.i != rhs.value.i};
   }
   (*status) = 1;
-  return 0;
+  return ERROR_VALUE;
 }
 
 int exec_assign() {
   int status = 0;
-  value tmp = eval_expression(current_statement->rhs, &status);
+  value tmp = eval_expression(current_statement->data.ASSIGN.expression, &status);
   value *val = valuedup(&tmp);
-  insert(current_statement->lhs->value, val);
+  insert(current_statement->data.ASSIGN.identifyer->data.IDENTIFYER.name, val);
   return status;
 }
 
 int exec_if() {
   int status = 0;
-  value tmp = eval_expression(current_statement->rhs, &status);
+  value tmp = eval_expression(current_statement->data.IF.condition, &status);
   value *val = valuedup(&tmp);
 
-  if (val == 0) {
-    ast *body = current_statement->next_statement;
-    current_statement = body ? body->next_statement : NULL;
+  if (val->value.i == 0) {
+    current_statement = current_statement->data.IF.if_body;
   }
   return status;
 }
 
 int exec_goto() {
   int status = 0;
-  int line = eval_expression(current_statement->rhs, &status).value.i;
-  code_line *tmp = head;
-  while (tmp->line_count != line) {
-    if (tmp->next == NULL)
+  value tmp = eval_expression(current_statement->data.GOTO.expression, &status);
+  int line = tmp.value.i;
+  code_line *tmp_line = head;
+  while (tmp_line->line_count != line) {
+    if (tmp_line->next == NULL)
       return 1;
-    tmp = tmp->next;
+    tmp_line = tmp_line->next;
   }
-  current_statement = tmp->code;
+  current_statement = tmp_line->code;
   current_line = line;
   return status;
 }
 
 int declare() {
   int status = 0;
-  value tmp = eval_expression(current_statement->rhs, &status);
+  value tmp = eval_expression(current_statement->data.DECLARE.expression, &status);
   value *val = valuedup(&tmp);
-  insert(current_statement->value, val);
+  insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name, val);
   return status;
 }
 
@@ -207,16 +217,31 @@ char *print_expr(ast *node) {
     return "";
 
   switch (node->type) {
-  case NODE_NUMBER:
-    return node->value;
-  case NODE_REFERENCE:
-    return node->value;
+  case NODE_INT:
+    snprintf(buf, sizeof(buf), "%d", node->data.LITTERAL.value.value.i);
+    return buf;
+  case NODE_FLOAT:
+    snprintf(buf, sizeof(buf), "%f", node->data.LITTERAL.value.value.f);
+    return buf;
+  case NODE_IDENTIFYER:
+    return node->data.IDENTIFYER.name;
   case NODE_OPERATION:
   case NODE_EXPRESION: {
-    char *op = node->value;
-    char *l = print_expr(node->lhs);
-    char *r = print_expr(node->rhs);
-    snprintf(buf, sizeof(buf), "%s %s %s", l, op, r);
+    char *op_str = "";
+    switch (node->data.EXPRESSION.operaton) {
+    case ADD: op_str = "+"; break;
+    case MINUS: op_str = "-"; break;
+    case MULT: op_str = "*"; break;
+    case DIV: op_str = "/"; break;
+    case AND: op_str = "&&"; break;
+    case OR: op_str = "||"; break;
+    case EQUAL: op_str = "=="; break;
+    case NOT_EQUAL: op_str = "!="; break;
+    default: op_str = "?"; break;
+    }
+    char *l = print_expr(node->data.EXPRESSION.lhs);
+    char *r = print_expr(node->data.EXPRESSION.rhs);
+    snprintf(buf, sizeof(buf), "%s %s %s", l, op_str, r);
     return buf;
   }
   default:
@@ -234,19 +259,21 @@ char *print_statement(ast *node) {
     switch (node->type) {
     case NODE_DECLAR:
       snprintf(stmt, sizeof(stmt), "var %s = %s",
-               node->value ? node->value : "", print_expr(node->rhs));
+               node->data.DECLARE.identifyer->data.IDENTIFYER.name, 
+               print_expr(node->data.DECLARE.expression));
       break;
     case NODE_ASSIGN:
-      snprintf(stmt, sizeof(stmt), "%s = %s", print_expr(node->lhs),
-               print_expr(node->rhs));
+      snprintf(stmt, sizeof(stmt), "%s = %s", 
+               print_expr(node->data.ASSIGN.identifyer),
+               print_expr(node->data.ASSIGN.expression));
       break;
     case NODE_IF_CONDITION: {
-      char *cond = print_expr(node->rhs);
+      char *cond = print_expr(node->data.IF.condition);
       snprintf(stmt, sizeof(stmt), "if (%s)", cond);
       break;
     }
     case NODE_GOTO:
-      snprintf(stmt, sizeof(stmt), "goto %s", print_expr(node->rhs));
+      snprintf(stmt, sizeof(stmt), "goto %s", print_expr(node->data.GOTO.expression));
       break;
     default:
       break;
