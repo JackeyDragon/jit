@@ -2,29 +2,72 @@
 #define AST_H
 
 #include "tokenizer.h"
+#include "types.h"
 
 typedef enum {
   NODE_EXPRESION,
   NODE_DECLAR,
   NODE_IF_CONDITION,
-  NODE_REFERENCE,
+  NODE_ARRAY_ACCESS,
   NODE_ASSIGN,
   NODE_EQUALS_SIGN,
   NODE_OPERATION,
-  NODE_NUMBER,
+  NODE_INT,
+  NODE_FLOAT,
+  NODE_ARRAY,
   NODE_KEYWORD,
   NODE_BRACKET_OPEN,
   NODE_BRACKET_CLOSE,
   NODE_GOTO,
+  NODE_BLOCK,
+  NODE_TYPE,
+  NODE_IDENTIFYER,
   NODE_ROOT
 } ast_type;
 
+typedef struct ast ast;
+
 typedef struct ast {
   ast_type type;
-  struct ast *rhs;
-  struct ast *lhs;
-  struct ast *next_statement;
-  char *value;
+  ast *next_statement;
+  union {
+    struct LITTERAL {
+      value value;
+    } LITTERAL;
+    struct IDENTIFYER {
+      char *name;
+    } IDENTIFYER;
+    struct EXPRESSION {
+      ast *lhs;
+      ast *rhs;
+      enum token_type operaton;
+    } EXPRESSION;
+    struct DECLARE {
+      ast *identifyer;
+      build_in_types type;
+      ast *expression;
+    } DECLARE;
+    struct ASSIGN {
+      ast *identifyer;
+      ast *expression;
+    } ASSIGN;
+    struct IF {
+      ast *condition;
+      ast *if_body;
+      ast *else_body;
+    } IF;
+    struct GOTO {
+      ast *expression;
+    } GOTO;
+    struct BLOCK {
+      ast **array;
+      int count;
+    } BLOCK;
+    struct TYPE {
+      build_in_types type;
+      ast *rhs;
+    } TYPE;
+  } data;
 } ast;
 
 typedef struct {

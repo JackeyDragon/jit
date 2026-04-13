@@ -63,7 +63,11 @@ void print_tokens(struct token *head) {
 
 void is_keyword(struct token *token) {
   char *value = token->value;
-  if (strcmp(value, "var") == 0) {
+  if (strcmp(value, "float") == 0) {
+    token->type = TYPE_FLOAT;
+  } else if (strcmp(value, "int") == 0) {
+    token->type = TYPE_INT;
+  } else if (strcmp(value, "var") == 0) {
     token->type = KEYWORD_VAR;
   } else if (strcmp(value, "if") == 0) {
     token->type = KEYWORD_IF;
@@ -148,7 +152,21 @@ char *is_operator(char *string, struct token *token, int *pos) {
 }
 
 int read_digit(char *string, struct token *token) {
+  // TODO test
   int count = 0;
+  while (isdigit(string[count])) {
+    count++;
+  }
+  if (string[count] != '.') {
+    char *val = malloc(count + 1);
+    strncpy(val, string, count);
+    val[count] = '\0';
+
+    token->value = val;
+    token->type = LITERAL_INT;
+    return count;
+  }
+  count++;
   while (isdigit(string[count])) {
     count++;
   }
@@ -157,6 +175,7 @@ int read_digit(char *string, struct token *token) {
   val[count] = '\0';
 
   token->value = val;
+  token->type = LITERAL_FLOAT;
   return count;
 }
 
@@ -185,7 +204,6 @@ struct token *tokinize(char *string) {
     } else if (isdigit(string[pos])) {
 
       pos += read_digit(string + pos, token);
-      token->type = NUMBER;
       break;
     } else if (strncmp(string + pos, ";", 1) == 0) {
 

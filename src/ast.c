@@ -15,8 +15,12 @@ ast_type token_type_to_ast_type(enum token_type type) {
   switch (type) {
   case IDENTIFYER:
     return NODE_REFERENCE;
-  case NUMBER:
-    return NODE_NUMBER;
+  case LITERAL_INT:
+    return NODE_INT;
+  case LITERAL_FLOAT:
+    return NODE_FLOAT;
+  case LITERAL_ARRAY_START:
+    return NODE_ARRAY;
   case KEYWORD_IF:
   case KEYWORD_VAR:
     return NODE_KEYWORD;
@@ -32,8 +36,12 @@ ast_type token_type_to_ast_type(enum token_type type) {
   case TOKEN_ASSIGN:
     return NODE_EQUALS_SIGN;
   case BRACKET_OPEN:
-    return NODE_BRACKET_OPEN;
+    return NODE_ARRAY_ACCESS;
   case BRACKET_CLOSE:
+    return NODE_BRACKET_CLOSE;
+  case CURLY_BRACKET_OPEN:
+    return NODE_BLOCK;
+  case CURLY_BRACKET_CLOSE:
     return NODE_BRACKET_CLOSE;
   default:
     return -1;
@@ -44,11 +52,62 @@ ast *clone_ast(ast *source) {
   if (!source)
     return NULL;
   ast *ast_new = malloc(sizeof(struct ast));
-  ast_new->lhs = clone_ast(source->lhs);
-  ast_new->rhs = clone_ast(source->rhs);
-  ast_new->next_statement = clone_ast(source->next_statement);
   ast_new->type = source->type;
-  ast_new->value = source->value ? strdup(source->value) : NULL;
+
+  switch (source->type) {
+  case NODE_INT:
+  case NODE_FLOAT:
+    ast_new->data.LITTERAL = source->data.LITTERAL;
+    break;
+  case NODE_REFERENCE:
+    ast_new->data.IDENTIFYER.name = source->data.IDENTIFYER.name
+                                        ? strdup(source->data.IDENTIFYER.name)
+                                        : NULL;
+    break;
+  case NODE_OPERATION:
+  case NODE_EXPRESION:
+    ast_new->data.EXPRESSION.lhs = clone_ast(source->data.EXPRESSION.lhs);
+    ast_new->data.EXPRESSION.rhs = clone_ast(source->data.EXPRESSION.rhs);
+    ast_new->data.EXPRESSION.operaton = source->data.EXPRESSION.operaton;
+    break;
+  case NODE_DECLAR:
+    ast_new->data.DECLARE.identifyer =
+        clone_ast(source->data.DECLARE.identifyer);
+    ast_new->data.DECLARE.type = source->data.DECLARE.type;
+    ast_new->data.DECLARE.expression =
+        clone_ast(source->data.DECLARE.expression);
+    break;
+  case NODE_ASSIGN:
+    ast_new->data.ASSIGN.identifyer = clone_ast(source->data.ASSIGN.identifyer);
+    ast_new->data.ASSIGN.expression = clone_ast(source->data.ASSIGN.expression);
+    break;
+  case NODE_IF_CONDITION:
+    ast_new->data.IF.condition = clone_ast(source->data.IF.condition);
+    ast_new->data.IF.if_body = clone_ast(source->data.IF.if_body);
+    ast_new->data.IF.else_body = clone_ast(source->data.IF.else_body);
+    break;
+  case NODE_GOTO:
+    ast_new->data.GOTO.expression = clone_ast(source->data.GOTO.expression);
+    break;
+  case NODE_ARRAY:
+  case NODE_ARRAY_ACCESS:
+  case NODE_BLOCK:
+    if (source->data.BLOCK.array && source->data.BLOCK.count > 0) {
+      ast_new->data.BLOCK.count = source->data.BLOCK.count;
+      ast_new->data.BLOCK.array =
+          malloc(sizeof(ast *) * source->data.BLOCK.count);
+      for (int i = 0; i < source->data.BLOCK.count; i++) {
+        ast_new->data.BLOCK.array[i] = clone_ast(source->data.BLOCK.array[i]);
+      }
+    }
+    break;
+  case NODE_ROOT:
+  case NODE_KEYWORD:
+  case NODE_BRACKET_OPEN:
+  case NODE_BRACKET_CLOSE:
+    break;
+  }
+
   return ast_new;
 }
 
@@ -78,22 +137,34 @@ void print_ast(ast *node, int depth) {
     printf("  ");
   switch (node->type) {
   case NODE_DECLAR:
-    printf("DECLAR: %s\n", node->value);
+    printf("DECLAR: %s\n", node->data.IDENTIFYER.name);
     break;
   case NODE_ASSIGN:
-    printf("ASSIGN\n");
+    printf("ASSIGN: %s\n", node->data.ASSIGN.identifyer->data.IDENTIFYER.name);
     break;
-  case NODE_NUMBER:
-    printf("NUMBER: %s\n", node->value);
+  case NODE_INT:
+    printf("INT: %d\n", node->data.LITTERAL.value.value.i);
+    break;
+  case NODE_FLOAT:
+    printf("FLOAT: %f\n", node->data.LITTERAL.value.value.f);
+    break;
+  case NODE_ARRAY:
+    printf("ARRAY (%d elements)\n", node->data.BLOCK.count);
+    break;
+  case NODE_BLOCK:
+    printf("BLOCK (%d statements)\n", node->data.BLOCK.count);
     break;
   case NODE_REFERENCE:
-    printf("REFERENCE: %s\n", node->value);
+    printf("REFERENCE: %s\n", node->data.IDENTIFYER.name);
+    break;
+  case NODE_ARRAY_ACCESS:
+    printf("ARRAY_ACCESS: %s\n", node->data.IDENTIFYER.name);
     break;
   case NODE_OPERATION:
-    printf("OPERATION: %s\n", node->value);
+    printf("OPERATION: %d\n", node->data.EXPRESSION.operaton);
     break;
   case NODE_KEYWORD:
-    printf("KEYWORD: %s\n", node->value);
+    printf("KEYWORD\n");
     break;
   case NODE_ROOT:
     printf("ROOT\n");
@@ -104,12 +175,13 @@ void print_ast(ast *node, int depth) {
   default:
     printf("UNKNOWN (type=%d)\n", node->type);
   }
-  print_ast(node->lhs, depth + 1);
-  print_ast(node->rhs, depth + 1);
-  if (node->next_statement) {
-    for (int i = 0; i < depth; i++)
-      printf("  ");
-    printf("-> next_statement:\n");
-    print_ast(node->next_statement, depth);
+  if (node->type == NODE_OPERATION || node->type == NODE_EXPRESION) {
+    print_ast(node->data.EXPRESSION.lhs, depth + 1);
+    print_ast(node->data.EXPRESSION.rhs, depth + 1);
+  }
+  if (node->type == NODE_BLOCK) {
+    for (int i = 0; i < node->data.BLOCK.count; i++) {
+      print_ast(node->data.BLOCK.array[i], depth + 1);
+    }
   }
 }

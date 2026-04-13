@@ -1,6 +1,7 @@
 #include "ast.h"
 #include "symbol_table.h"
 #include "tokenizer.h"
+#include "types.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,9 +32,17 @@ ast *parse_expression(int min_bp) {
   ast *lhs;
 
   switch (current->type) {
-  case NUMBER:
+  case LITERAL_FLOAT:
     lhs = malloc(sizeof(ast));
-    lhs->type = NODE_NUMBER;
+    lhs->type = NODE_FLOAT;
+    lhs->value = current->value;
+    lhs->lhs = NULL;
+    lhs->rhs = NULL;
+    current = current->next;
+    break;
+  case LITERAL_INT:
+    lhs = malloc(sizeof(ast));
+    lhs->type = NODE_INT;
     lhs->value = current->value;
     lhs->lhs = NULL;
     lhs->rhs = NULL;
@@ -165,24 +174,61 @@ ast *parse_statement() {
   return first;
 }
 
-ast *parse_declaration_ast() {
-  if (!current || current->type != KEYWORD_VAR)
+ast *pasre_type() {
+  if (!current)
     return NULL;
-  current = current->next;
 
+  ast *type = malloc(sizeof(ast));
+  type->type = NODE_TYPE;
+  switch (current->type) {
+  case LITERAL_FLOAT:
+    type->data.TYPE.type = FLOAT;
+    type->data.TYPE.rhs = NULL;
+  case LITERAL_INT:
+    type->data.TYPE.type = INT;
+    type->data.TYPE.rhs = NULL;
+  default:
+    free(type);
+    return NULL;
+  }
+  return type;
+}
+
+ast *pasre_identifyer() {
   if (!current || current->type != IDENTIFYER)
     return NULL;
+  ast *identifyer = malloc(sizeof(ast));
+
+  identifyer->type = NODE_IDENTIFYER;
+  identifyer->data.IDENTIFYER.name = current->value;
+
+  current = current->next;
+  return identifyer;
+}
+
+ast *parse_declaration_ast() {
+  ast *type = pasre_type();
+  if (!current || !type)
+    return NULL;
+
+  current = current->next;
+  ast *name = pasre_identifyer();
+  if (!current)
+    return NULL;
+
   ast *decl = malloc(sizeof(ast));
   decl->type = NODE_DECLAR;
-  decl->value = current->value;
-  current = current->next;
+  decl->data.DECLARE.identifyer = type;
 
-  if (!current || current->type != TOKEN_ASSIGN)
+  if (!current || current->type != TOKEN_ASSIGN) {
+    free(name);
+    free(decl);
+    free(type);
     return NULL;
+  }
   current = current->next;
 
-  decl->rhs = parse_expression(0);
-  decl->lhs = NULL;
+  decl->data.DECLARE.expression = parse_expression(0);
   decl->next_statement = NULL;
 
   return decl;
@@ -194,27 +240,24 @@ ast *parse_if() {
 
   ast *stmt_if = malloc(sizeof(ast));
   stmt_if->type = NODE_IF_CONDITION;
-  stmt_if->value = "if";
 
   current = current->next;
   if (!current || current->type != BRACKET_OPEN)
     return NULL;
 
-  stmt_if->rhs = parse_expression(0);
-  stmt_if->lhs = NULL;
-  stmt_if->next_statement = parse_statement();
+  stmt_if->data.IF.condition = parse_expression(0);
+  stmt_if->next_statement = parse_statement(); // future after body
 
   return stmt_if;
 }
 
 ast *parse_assignment_ast() {
-  if (!current || current->type != IDENTIFYER)
+  ast *name = pasre_identifyer();
+  if (!current || !name)
     return NULL;
   ast *ident = malloc(sizeof(ast));
-  ident->type = NODE_REFERENCE;
-  ident->value = current->value;
-  ident->lhs = NULL;
-  ident->rhs = NULL;
+  ident->type = NODE_IDENTIFYER;
+  ident->data.ASSIGN.identifyer = name;
   current = current->next;
 
   if (!current || current->type != TOKEN_ASSIGN)

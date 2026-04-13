@@ -11,4 +11,6 @@ typedef struct value {
     void *array;
   } value;
 } value;
+
+value *valuedup(value *value);
 #endif // !TYPES_H

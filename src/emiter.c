@@ -37,8 +37,8 @@ int init() {
 
 value eval_expression(ast *expresion, int *status) {
   (*status) = 0;
-  if (expresion->type == NODE_NUMBER) {
-    return atoi(expresion->value);
+  if (expresion->type == NODE_INT) {
+    return (value){.type = INT, .value = atoi(expresion->value)};
   }
   if (expresion->type == NODE_REFERENCE) {
     struct entry *entry = lookup(expresion->value);
@@ -93,14 +93,16 @@ value eval_expression(ast *expresion, int *status) {
 
 int exec_assign() {
   int status = 0;
-  int val = eval_expression(current_statement->rhs, &status);
-  set_entry_val(current_statement->lhs->value, val);
+  value tmp = eval_expression(current_statement->rhs, &status);
+  value *val = valuedup(&tmp);
+  insert(current_statement->lhs->value, val);
   return status;
 }
 
 int exec_if() {
   int status = 0;
-  int val = eval_expression(current_statement->rhs, &status);
+  value tmp = eval_expression(current_statement->rhs, &status);
+  value *val = valuedup(&tmp);
 
   if (val == 0) {
     ast *body = current_statement->next_statement;
@@ -111,7 +113,7 @@ int exec_if() {
 
 int exec_goto() {
   int status = 0;
-  int line = eval_expression(current_statement->rhs, &status);
+  int line = eval_expression(current_statement->rhs, &status).value.i;
   code_line *tmp = head;
   while (tmp->line_count != line) {
     if (tmp->next == NULL)
@@ -125,7 +127,8 @@ int exec_goto() {
 
 int declare() {
   int status = 0;
-  int val = eval_expression(current_statement->rhs, &status);
+  value tmp = eval_expression(current_statement->rhs, &status);
+  value *val = valuedup(&tmp);
   insert(current_statement->value, val);
   return status;
 }

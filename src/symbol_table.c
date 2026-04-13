@@ -39,8 +39,8 @@ typedef struct stack {
 value_map root_table;
 block_table_map scope_map;
 
-stack *head;
-stack *tail;
+stack *bottom;
+stack *top;
 
 void init_table() {
   block_table_map_init(&scope_map);
@@ -60,6 +60,19 @@ int insert(char *name, value *val) {
 }
 
 value *lookup(char *name) {
+  stack *tmp = top;
+
+  while (tmp != NULL) {
+    block_table *block = tmp->table;
+    symbol *arr = (symbol *)block->array;
+    for (int i = 0; i < block->size; i++) {
+      if (arr[i].name && strcmp(arr[i].name, name) == 0) {
+        return &arr[i].value;
+      }
+    }
+    tmp = tmp->previous;
+  }
+
   value_map_itr it = value_map_get(&root_table, name);
   if (!value_map_is_end(it)) {
     return it.data->val;
@@ -68,9 +81,28 @@ value *lookup(char *name) {
 }
 
 void print_table() {
+  printf("=== Root Table ===\n");
   for (value_map_itr it = value_map_first(&root_table); !value_map_is_end(it);
        it = value_map_next(it)) {
     printf("[%s: %d]\n", it.data->key, it.data->val->value.i);
+  }
+
+  printf("=== Scope Stack ===\n");
+  stack *tmp = bottom;
+  int level = 0;
+  while (tmp != NULL) {
+    printf("Scope %d:\n", level);
+    block_table *block = tmp->table;
+    if (block && block->array) {
+      symbol *arr = (symbol *)block->array;
+      for (int i = 0; i < block->size; i++) {
+        if (arr[i].name) {
+          printf("  [%s: %d]\n", arr[i].name, arr[i].value.value.i);
+        }
+      }
+    }
+    tmp = tmp->next;
+    level++;
   }
 }
 
@@ -93,28 +125,28 @@ int enter(char *name) {
   block_table *entry = lookup_block_table(name);
   if (!entry)
     return -1;
-  if (!head) {
-    head = malloc(sizeof(struct stack));
-    head->table = entry;
-    tail = head;
-    head->next = NULL;
-    head->previous = NULL;
-    if (head)
+  if (!bottom) {
+    bottom = malloc(sizeof(struct stack));
+    bottom->table = entry;
+    top = bottom;
+    bottom->next = NULL;
+    bottom->previous = NULL;
+    if (bottom)
       return 0;
     return -1;
   }
 
-  tail->next = malloc(sizeof(struct stack));
-  tail->next->previous = tail;
-  tail = tail->next;
-  tail->table = entry;
+  top->next = malloc(sizeof(struct stack));
+  top->next->previous = top;
+  top = top->next;
+  top->table = entry;
   return 0;
 }
 
 int leave() {
-  if (!head)
+  if (!bottom)
     return -1;
-  tail = tail->previous;
-  tail->next = NULL;
+  top = top->previous;
+  top->next = NULL;
   return 0;
 }
