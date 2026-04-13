@@ -85,6 +85,7 @@ ast *clone_ast(ast *source) {
     ast_new->data.IF.condition = clone_ast(source->data.IF.condition);
     ast_new->data.IF.if_body = clone_ast(source->data.IF.if_body);
     ast_new->data.IF.else_body = clone_ast(source->data.IF.else_body);
+    ast_new->next_statement = clone_ast(source->next_statement);
     break;
   case NODE_GOTO:
     ast_new->data.GOTO.expression = clone_ast(source->data.GOTO.expression);

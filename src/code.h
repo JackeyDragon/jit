@@ -24,4 +24,6 @@ char *code_print_expr(ast *node);
 // Statement to string (debug)
 char *code_print_statement(ast *node);
 
+// set current code line for goto (or jumps in general)
+int set_current_line(int line);
 #endif

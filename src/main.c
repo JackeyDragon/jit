@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
       }
 
       struct token *head = tokinize(input);
-      print_tokens(head);
+      // print_tokens(head);
       current = head;
       if (strcmp(input, "list") == 0) {
         code_print_all();
@@ -127,10 +127,15 @@ int main(int argc, char *argv[]) {
       }
       ast *tree = parse_statement();
       if (!tree) {
-        printf("continue\n");
+        printf("syntax error\n");
         input = NULL;
         continue;
       }
+
+      // Debug: print the AST before executing
+      printf("DEBUG: parsed AST: %s\n", code_print_statement(tree));
+
+      // todo semantic analysis
       exec(tree);
       print_table();
       input = NULL;

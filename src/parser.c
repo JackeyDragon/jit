@@ -249,7 +249,8 @@ ast *parse_if() {
     return NULL;
 
   stmt_if->data.IF.condition = parse_expression(0);
-  stmt_if->data.IF.if_body = parse_statement();
+  stmt_if->data.IF.if_body = NULL;
+  stmt_if->next_statement = parse_statement();
   stmt_if->data.IF.else_body = NULL;
 
   return stmt_if;
