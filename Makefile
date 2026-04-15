@@ -6,8 +6,8 @@ SRCS = src/main.c src/lexer.c src/parser.c src/ast.c src/code.c src/emiter.c src
 OBJS = $(SRCS:.c=.o)
 TARGET = bin/jit
 
-TEST_SRCS = tests/test_lexer.c tests/test_parser.c tests/test_integration.c
-TEST_TARGETS = tests/test_lexer tests/test_parser tests/test_integration
+TEST_SRCS = tests/test_lexer.c tests/test_parser.c tests/test_function.c tests/test_integration.c
+TEST_TARGETS = tests/test_lexer tests/test_parser tests/test_function tests/test_integration
 
 .PHONY: all clean test unit integration benchmark
 
@@ -34,6 +34,9 @@ tests/test_lexer: tests/test_lexer.o src/lexer.o src/tokenizer.h
 tests/test_parser: tests/test_parser.o src/parser.o src/ast.o src/lexer.o src/emiter.o src/symbol_table.o
 	$(CC) $(CFLAGS) -o $@ $^
 
+tests/test_function: tests/test_function.o src/parser.o src/ast.o src/lexer.o src/emiter.o src/symbol_table.o src/code.o src/types.o
+	$(CC) $(CFLAGS) -o $@ $^
+
 tests/test_integration: tests/test_integration.o src/parser.o src/ast.o src/lexer.o src/emiter.o src/symbol_table.o
 	$(CC) $(CFLAGS) -o $@ $^
 
@@ -41,6 +44,9 @@ tests/test_lexer.o: tests/test_lexer.c tests/test.h src/tokenizer.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 tests/test_parser.o: tests/test_parser.c tests/test.h src/tokenizer.h src/ast.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+tests/test_function.o: tests/test_function.c tests/test.h src/tokenizer.h src/ast.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 tests/test_integration.o: tests/test_integration.c tests/test.h src/tokenizer.h src/ast.h src/symbol_table.h
