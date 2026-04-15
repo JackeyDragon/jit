@@ -300,7 +300,43 @@ ast *parse_parameter_declaration() {
     return NULL;
   }
 
-  return NULL;
+  ast *param = malloc(sizeof(ast));
+  param->type = NODE_PARAMETER_DECLARATION;
+  param->data.PARAMETER_DECLARATION.type = type;
+  param->data.PARAMETER_DECLARATION.name = name;
+  param->data.PARAMETER_DECLARATION.next_param = NULL;
+
+  ast *tail = param;
+
+  while (current && current->type == COLON) {
+    current = current->next;
+
+    type = parse_type();
+    name = parse_identifyer();
+
+    if (!name || !type) {
+      free(type);
+      free(name);
+      ast *tmp = param;
+      while (tmp) {
+        ast *next = tmp->data.PARAMETER_DECLARATION.next_param;
+        free(tmp);
+        tmp = next;
+      }
+      return NULL;
+    }
+
+    ast *next_param = malloc(sizeof(ast));
+    next_param->type = NODE_PARAMETER_DECLARATION;
+    next_param->data.PARAMETER_DECLARATION.type = type;
+    next_param->data.PARAMETER_DECLARATION.name = name;
+    next_param->data.PARAMETER_DECLARATION.next_param = NULL;
+
+    tail->data.PARAMETER_DECLARATION.next_param = next_param;
+    tail = next_param;
+  }
+
+  return param;
 }
 
 ast *parse_function_declaration() {

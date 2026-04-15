@@ -172,8 +172,19 @@ void print_ast(ast *node, int depth) {
   case NODE_ROOT:
     printf("ROOT\n");
     break;
+  case NODE_TYPE:
+    printf("TYPE: %s\n", node->data.TYPE.type == INT ? "int" : "float");
+    break;
   case NODE_IF_CONDITION:
     printf("IF_CONDITION\n");
+    break;
+  case NODE_FUNCTION_DECLARATION:
+    printf("FUNCTION_DECLARATION: %s\n",
+           node->data.FUNCTION_DECLARATION.identifyer->data.IDENTIFYER.name);
+    break;
+  case NODE_PARAMETER_DECLARATION:
+    printf("PARAMETER_DECLARATION: %s\n",
+           node->data.PARAMETER_DECLARATION.name->data.IDENTIFYER.name);
     break;
   default:
     printf("UNKNOWN (type=%d)\n", node->type);
@@ -185,6 +196,20 @@ void print_ast(ast *node, int depth) {
   if (node->type == NODE_BLOCK) {
     for (int i = 0; i < node->data.BLOCK.count; i++) {
       print_ast(node->data.BLOCK.array[i], depth + 1);
+    }
+  }
+  if (node->type == NODE_FUNCTION_DECLARATION) {
+    if (node->data.FUNCTION_DECLARATION.parameter) {
+      print_ast(node->data.FUNCTION_DECLARATION.parameter, depth + 1);
+    }
+    if (node->data.FUNCTION_DECLARATION.block) {
+      print_ast(node->data.FUNCTION_DECLARATION.block, depth + 1);
+    }
+  }
+  if (node->type == NODE_PARAMETER_DECLARATION) {
+    print_ast(node->data.PARAMETER_DECLARATION.type, depth + 1);
+    if (node->data.PARAMETER_DECLARATION.next_param) {
+      print_ast(node->data.PARAMETER_DECLARATION.next_param, depth + 1);
     }
   }
 }
