@@ -97,10 +97,13 @@ int main() {
     run_parse_test("int foo() { int a = 5; }", "int foo() { int a = 5; }", 1);
     run_parse_test("int foo() { a = 5; }", "int foo() { a = 5; }", 1);
 
-    printf("\n=== FUNCTION DECLARATIONS WITH PARAMETERS (not working - hanging) ===\n");
-    printf("  int foo(int x) { }: SKIPPED (hangs due to parse_block bug)\n");
-    printf("  float bar(float x) { }: SKIPPED (hangs due to parse_block bug)\n");
-    printf("  int foo(int x, int y) { }: SKIPPED (hangs due to parse_block bug)\n");
+    printf("\n=== FUNCTION DECLARATIONS WITH PARAMETERS ===\n");
+    run_parse_test("int foo(int x) { }", "int foo(int x) { }", 0);
+    run_parse_test("int foo(int x) { x = 5; }", "int foo(int x) { x = 5; }", 1);
+    run_parse_test("float bar(float x) { }", "float bar(float x) { }", 0);
+    run_parse_test("float bar(float x) { x = 5.0; }", "float bar(float x) { x = 5.0; }", 1);
+    run_parse_test("int foo(int x, int y) { }", "int foo(int x, int y) { }", 0);
+    run_parse_test("int foo(int x, int y) { int z = x + y; }", "int foo(int x, int y) { int z = x + y; }", 1);
 
     printf("\n=== FUNCTION WITH STATEMENTS (should work) ===\n");
     run_parse_test("int foo() { a = a + 1; }", "int foo() { a = a + 1; }", 1);

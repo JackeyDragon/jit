@@ -299,6 +299,7 @@ ast *parse_parameter_declaration() {
     free(name);
     return NULL;
   }
+
   return NULL;
 }
 
