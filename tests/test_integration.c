@@ -22,7 +22,7 @@ void reset_for_test() {
 
 void test_integration_var_declaration() {
     reset_for_test();
-    struct token *tokens = tokinize("var x = 5;");
+    struct token *tokens = tokinize("int x = 5;");
     current = tokens;
     ast *tree = parse_statement();
     exec(tree);
@@ -31,7 +31,7 @@ void test_integration_var_declaration() {
 
 void test_integration_addition() {
     reset_for_test();
-    struct token *tokens = tokinize("var x = 5 + 3;");
+    struct token *tokens = tokinize("int x = 5 + 3;");
     current = tokens;
     ast *tree = parse_statement();
     exec(tree);

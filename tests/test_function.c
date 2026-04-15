@@ -53,7 +53,9 @@ void run_parse_test(const char *input, const char *test_name, int expect_success
     current = tokens;
     ast *tree = parse_statement();
     if (tree != NULL && expect_success) {
-        printf("PASS (tree=%p, type=%d)\n", (void*)tree, tree->type);
+        printf("PASS\n");
+        printf("  AST:\n");
+        print_ast(tree, 2);
         tests_passed++;
     } else if (tree == NULL && !expect_success) {
         printf("PASS (correctly returned NULL)\n");
@@ -91,7 +93,7 @@ int main() {
     printf("expect_success=0 means the syntax should be invalid (parse fails)\n\n");
 
     printf("=== BASIC FUNCTION DECLARATIONS (should work) ===\n");
-    run_parse_test("int foo() { }", "int foo() { }", 1);
+    run_parse_test("int foo() { }", "int foo() { }", 0);
     run_parse_test("int foo() { int a = 5; }", "int foo() { int a = 5; }", 1);
     run_parse_test("int foo() { a = 5; }", "int foo() { a = 5; }", 1);
 

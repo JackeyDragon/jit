@@ -133,7 +133,7 @@ ast *parse_statement() {
   ast *first = NULL;
   ast *tail = NULL;
 
-  while (current) {
+  while (current && current->type != CURLY_BRACKET_CLOSE) {
     ast *stmt = NULL;
 
     if (current->type == TYPE_INT || current->type == TYPE_FLOAT) {
@@ -161,8 +161,6 @@ ast *parse_statement() {
 
     if (!stmt)
       break;
-
-    current = current->next;
 
     if (!first) {
       first = tail = stmt;
@@ -238,6 +236,14 @@ ast *parse_declaration_ast() {
   decl->data.DECLARE.expression = parse_expression(0);
   decl->next_statement = NULL;
 
+  if (current == NULL || current->type != SEMICOLON) {
+    free(decl);
+    free(name);
+    free(type);
+    return NULL;
+  }
+  current = current->next;
+
   free(type);
   return decl;
 }
@@ -280,7 +286,7 @@ ast *parse_assignment_ast() {
     print("missing semicolon");
     return NULL;
   }
-
+  current = current->next;
   return assign;
 }
 
@@ -300,6 +306,7 @@ ast *parse_function_declaration() {
   ast *type = parse_type();
   if (!type)
     return NULL;
+
   ast *name = parse_identifyer();
   if (!name) {
     free(type);
@@ -314,6 +321,7 @@ ast *parse_function_declaration() {
   ast *parameters;
   if (!current || current->type == BRACKET_CLOSE) {
     parameters = NULL;
+    current = current->next;
   } else {
     parameters = parse_parameter_declaration();
     if (!parameters || expect(BRACKET_CLOSE)) {
@@ -341,48 +349,65 @@ ast *parse_function_declaration() {
 }
 
 ast *parse_block() {
-  // parse_statement, returns add to list,
+  if (expect(CURLY_BRACKET_OPEN)) {
+    return NULL;
+  }
+
   typedef struct tmp_list tmp_list;
 
   typedef struct tmp_list {
     ast *stmt;
     tmp_list *next;
   } tmp_list;
-  tmp_list *head;
-  tmp_list *tail;
-
-  int count = 1;
-  tail = head = malloc(sizeof(tmp_list));
-
-  tail->stmt = parse_statement();
-
-  if (tail->stmt) {
-    free(tail);
+  tmp_list *head = NULL;
+  tmp_list *tail = NULL;
+  int count = 0;
+  if (!current || current->type == CURLY_BRACKET_CLOSE)
     return NULL;
-  }
+  while (current && current->type != CURLY_BRACKET_CLOSE) {
+    tmp_list *node = malloc(sizeof(tmp_list));
+    node->stmt = parse_statement();
+    node->next = NULL;
 
-  while (!current || current->type == CURLY_BRACKET_CLOSE) {
-    tail->next = malloc(sizeof(tmp_list));
-    tail = tail->next;
-    tail->stmt = parse_statement();
-    count++;
-    if (!tail->stmt) {
-      free(head);
+    if (!node->stmt) {
+      free(node);
+      while (head) {
+        tmp_list *next = head->next;
+        free(head);
+        head = next;
+      }
       return NULL;
     }
+
+    if (!head) {
+      head = tail = node;
+    } else {
+      tail->next = node;
+      tail = node;
+    }
+    count++;
+  }
+
+  if (expect(CURLY_BRACKET_CLOSE)) {
+    while (head) {
+      tmp_list *next = head->next;
+      free(head);
+      head = next;
+    }
+    return NULL;
   }
 
   ast *block = malloc(sizeof(ast));
   block->type = NODE_BLOCK;
   block->data.BLOCK.count = count;
-  block->data.BLOCK.array = malloc(sizeof(ast *) * count);
+  block->data.BLOCK.array = malloc(sizeof(ast *) * (count > 0 ? count : 1));
   ast **array = (ast **)block->data.BLOCK.array;
-  tail = head;
+  tmp_list *tmp = head;
   for (int i = 0; i < count; i++) {
-    array[i] = head->stmt;
-    head = head->next;
-    free(tail);
-    tail = head;
+    array[i] = tmp->stmt;
+    tmp_list *next = tmp->next;
+    free(tmp);
+    tmp = next;
   }
   return block;
 }
