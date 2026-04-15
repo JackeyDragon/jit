@@ -118,6 +118,11 @@ ast *parse_goto() {
   ast_goto->data.GOTO.expression = parse_expression(0);
   ast_goto->next_statement = NULL;
 
+  if (current == NULL || current->type != SEMICOLON) {
+    print("missing semicolon");
+    return NULL;
+  }
+
   return ast_goto;
 }
 
@@ -157,16 +162,7 @@ ast *parse_statement() {
     if (!stmt)
       break;
 
-    int requires_semicolon = 1;
-    if (stmt->type == NODE_IF_CONDITION)
-      requires_semicolon = 0;
-
-    if (requires_semicolon && (current == NULL || current->type != SEMICOLON)) {
-      print("missing semicolon");
-      return NULL;
-    } else if (requires_semicolon) {
-      current = current->next;
-    }
+    current = current->next;
 
     if (!first) {
       first = tail = stmt;
@@ -280,6 +276,11 @@ ast *parse_assignment_ast() {
   assign->data.ASSIGN.expression = parse_expression(0);
   assign->next_statement = NULL;
 
+  if (current == NULL || current->type != SEMICOLON) {
+    print("missing semicolon");
+    return NULL;
+  }
+
   return assign;
 }
 
@@ -386,6 +387,4 @@ ast *parse_block() {
   return block;
 }
 
-ast *parse_function_call() {
-    return NULL;
-}
+ast *parse_function_call() { return NULL; }
