@@ -16,6 +16,7 @@ enum token_type {
   LITERAL_ARRAY_START,
   LITERAL_ARRAY_END,
   SEMICOLON,
+  COLON,
   ADD,
   MINUS,
   MULT,

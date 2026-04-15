@@ -216,6 +216,13 @@ struct token *tokinize(char *string) {
       pos++;
 
       break;
+    } else if (strncmp(string + pos, ",", 1) == 0) {
+
+      token->type = COLON;
+      token->value = ",";
+      pos++;
+
+      break;
     } else if (strncmp(string + pos, "(", 1) == 0) {
       token->type = BRACKET_OPEN;
       token->value = strdup("(");
