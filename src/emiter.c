@@ -223,7 +223,11 @@ int declare() {
   insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name, val);
   return status;
 }
+int exec_declare_function() {
+  // todo create and store function, caluclate and register new scope
 
+  return 0;
+}
 int execute_statement() {
   while (1) {
     switch (current_statement->type) {
@@ -242,6 +246,9 @@ int execute_statement() {
     case NODE_GOTO:
       exec_goto();
       continue;
+    case NODE_FUNCTION_DECLARATION:
+      exec_declare_function();
+      break;
     default:
       printf("bad statement\n");
       return 1;

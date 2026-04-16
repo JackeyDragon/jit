@@ -153,6 +153,7 @@ int leave() {
   if (!bottom)
     return -1;
   top = top->previous;
+  free(top->next);
   top->next = NULL;
   return 0;
 }
