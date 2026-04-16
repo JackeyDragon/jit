@@ -75,8 +75,10 @@ void is_keyword(struct token *token) {
     token->type = TYPE_INT;
   } else if (strcmp(value, "if") == 0) {
     token->type = KEYWORD_IF;
-  } else if (strcmp(value, "goto") == 0) {
+  } else if (strcmp(value, "return") == 0) {
     token->type = KEYWORD_GOTO;
+  } else if (strcmp(value, "return") == 0) {
+    token->type = KEYWORD_RETURN;
   } else {
     token->type = IDENTIFYER;
   }
