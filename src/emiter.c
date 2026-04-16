@@ -15,10 +15,31 @@ ast *emiter_get_current_statement(void) { return current_statement; }
 
 void emiter_set_current_statement(ast *stmt) { current_statement = stmt; }
 
+value exec_function_call(function *function) {
+  enter();
+  ast *provided = current_statement->data.FUNCTION_CALL.params;
+  int status = 0;
+  for (int i = 0; i < function->parameter_count && provided; i++) {
+    value val = eval_expression(provided, &status);
+    val.type = function->parameter[i].type;
+    insert(function->parameter[i].name, &val);
+    provided = provided->next_statement;
+  }
+
+  if (status)
+    return ERROR_VALUE;
+  leave();
+  return ERROR_VALUE;
+}
+
 value eval_expression(ast *expresion, int *status) {
   (*status) = 0;
   if (expresion->type == NODE_INT || expresion->type == NODE_FLOAT) {
     return expresion->data.LITTERAL.value;
+  }
+  if (expresion->type == NODE_FUNCTION_CALL) {
+    return exec_function_call(
+        lookup_function(expresion->data.FUNCTION_CALL.name));
   }
   if (expresion->type == NODE_IDENTIFYER) {
     value *val = lookup(expresion->data.IDENTIFYER.name);
@@ -225,6 +246,11 @@ int declare() {
 }
 int exec_declare_function() {
   // todo create and store function, caluclate and register new scope
+  if (lookup_function(current_statement->data.FUNCTION_DECLARATION.identifyer
+                          ->data.IDENTIFYER.name))
+    return 1;
+
+  insert_function(current_statement);
 
   return 0;
 }

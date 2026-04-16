@@ -1,5 +1,4 @@
 #include "symbol_table.h"
-#include "types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,49 +10,41 @@
 #define CMPR_FN vt_cmpr_string
 #include "verstable.h"
 
-typedef struct block_table block_table;
-
-#define NAME block_table_map
-#define KEY_TY char *
-#define VAL_TY block_table *
-#define HASH_FN vt_hash_string
-#define CMPR_FN vt_cmpr_string
-#include "verstable.h"
-
-typedef struct symbol {
-  char *name;
-  value value;
-} symbol;
-
-struct block_table {
-  int size;
-  void *array; // array of symbols
-};
-
 typedef struct stack {
-  block_table *table;
+  value_map *scope;
   struct stack *previous;
   struct stack *next;
 } stack;
 
-value_map root_table;
-block_table_map scope_map;
+#define NAME function_map
+#define KEY_TY char *
+#define VAL_TY function *
+#define HASH_FN vt_hash_string
+#define CMPR_FN vt_cmpr_string
+#include "verstable.h"
 
-stack *bottom;
-stack *top;
+value_map global_scope;
+function_map functions;
 
-void init_table() {
-  block_table_map_init(&scope_map);
-  value_map_init(&root_table);
+stack *bottom = NULL;
+stack *top = NULL;
+
+void init_table() { 
+  value_map_init(&global_scope);
+  function_map_init(&functions);
 }
 
 void reset_table() {
-  value_map_cleanup(&root_table);
-  value_map_init(&root_table);
+  value_map_cleanup(&global_scope);
+  value_map_init(&global_scope);
 }
 
 int insert(char *name, value *val) {
-  value_map_insert(&root_table, name, val);
+  if (top && top->scope) {
+    value_map_insert(top->scope, name, val);
+  } else {
+    value_map_insert(&global_scope, name, val);
+  }
   return 0;
 }
 
@@ -61,17 +52,14 @@ value *lookup(char *name) {
   stack *tmp = top;
 
   while (tmp != NULL) {
-    block_table *block = tmp->table;
-    symbol *arr = (symbol *)block->array;
-    for (int i = 0; i < block->size; i++) {
-      if (arr[i].name && strcmp(arr[i].name, name) == 0) {
-        return &arr[i].value;
-      }
+    value_map_itr it = value_map_get(tmp->scope, name);
+    if (!value_map_is_end(it)) {
+      return it.data->val;
     }
     tmp = tmp->previous;
   }
 
-  value_map_itr it = value_map_get(&root_table, name);
+  value_map_itr it = value_map_get(&global_scope, name);
   if (!value_map_is_end(it)) {
     return it.data->val;
   }
@@ -79,8 +67,8 @@ value *lookup(char *name) {
 }
 
 void print_table() {
-  printf("=== Root Table ===\n");
-  for (value_map_itr it = value_map_first(&root_table); !value_map_is_end(it);
+  printf("=== Global Scope ===\n");
+  for (value_map_itr it = value_map_first(&global_scope); !value_map_is_end(it);
        it = value_map_next(it)) {
     if (it.data->val->type == FLOAT) {
       printf("[%s: float %f]\n", it.data->key, it.data->val->value.f);
@@ -94,17 +82,12 @@ void print_table() {
   int level = 0;
   while (tmp != NULL) {
     printf("Scope %d:\n", level);
-    block_table *block = tmp->table;
-    if (block && block->array) {
-      symbol *arr = (symbol *)block->array;
-      for (int i = 0; i < block->size; i++) {
-        if (arr[i].name) {
-          if (arr[i].value.type == FLOAT) {
-            printf("  [%s: float %f]\n", arr[i].name, arr[i].value.value.f);
-          } else {
-            printf("  [%s: int %d]\n", arr[i].name, arr[i].value.value.i);
-          }
-        }
+    for (value_map_itr it = value_map_first(tmp->scope); !value_map_is_end(it);
+         it = value_map_next(it)) {
+      if (it.data->val->type == FLOAT) {
+        printf("  [%s: float %f]\n", it.data->key, it.data->val->value.f);
+      } else {
+        printf("  [%s: int %d]\n", it.data->key, it.data->val->value.i);
       }
     }
     tmp = tmp->next;
@@ -112,48 +95,86 @@ void print_table() {
   }
 }
 
-block_table *lookup_block_table(char *name) {
-  block_table_map_itr it = block_table_map_get(&scope_map, name);
-  if (!block_table_map_is_end(it)) {
+int enter(void) {
+  value_map *new_scope = malloc(sizeof(value_map));
+  if (!new_scope)
+    return -1;
+  value_map_init(new_scope);
+
+  stack *node = malloc(sizeof(stack));
+  if (!node) {
+    free(new_scope);
+    return -1;
+  }
+  node->scope = new_scope;
+  node->next = NULL;
+
+  if (!top) {
+    bottom = top = node;
+    node->previous = NULL;
+  } else {
+    node->previous = top;
+    top->next = node;
+    top = node;
+  }
+  return 0;
+}
+
+int leave(void) {
+  if (!top)
+    return -1;
+
+  stack *prev = top->previous;
+  value_map_cleanup(top->scope);
+  free(top->scope);
+  free(top);
+  top = prev;
+
+  if (top) {
+    top->next = NULL;
+  } else {
+    bottom = NULL;
+  }
+  return 0;
+}
+
+static int count_parameters(ast *param) {
+  int count = 0;
+  while (param) {
+    count++;
+    param = param->data.PARAMETER_DECLARATION.next_param;
+  }
+  return count;
+}
+
+int insert_function(ast *func_ast) {
+  if (func_ast->type != NODE_FUNCTION_DECLARATION) {
+    return -1;
+  }
+
+  function *func = malloc(sizeof(function));
+  func->name = func_ast->data.FUNCTION_DECLARATION.identifyer->data.IDENTIFYER.name;
+  func->return_type = func_ast->data.FUNCTION_DECLARATION.return_type->data.TYPE.type;
+  func->code_block = func_ast->data.FUNCTION_DECLARATION.block;
+
+  func->parameter_count = count_parameters(func_ast->data.FUNCTION_DECLARATION.parameter);
+  func->parameter = malloc(sizeof(parameter) * func->parameter_count);
+
+  ast *param_ast = func_ast->data.FUNCTION_DECLARATION.parameter;
+  for (int i = 0; i < func->parameter_count; i++) {
+    func->parameter[i].name = param_ast->data.PARAMETER_DECLARATION.name->data.IDENTIFYER.name;
+    func->parameter[i].type = param_ast->data.PARAMETER_DECLARATION.type->data.TYPE.type;
+    param_ast = param_ast->data.PARAMETER_DECLARATION.next_param;
+  }
+
+  function_map_insert(&functions, func->name, func);
+  return 0;
+}
+
+function *lookup_function(char *name) {
+  function_map_itr it = function_map_get(&functions, name);
+  if (!function_map_is_end(it)) {
     return it.data->val;
   }
   return NULL;
-}
-
-int add_block_table(struct block_table *table, char *name) {
-  if (lookup_block_table(name))
-    return -1;
-  block_table_map_insert(&scope_map, name, table);
-  return 0;
-}
-
-int enter(char *name) {
-  block_table *entry = lookup_block_table(name);
-  if (!entry)
-    return -1;
-  if (!bottom) {
-    bottom = malloc(sizeof(struct stack));
-    bottom->table = entry;
-    top = bottom;
-    bottom->next = NULL;
-    bottom->previous = NULL;
-    if (bottom)
-      return 0;
-    return -1;
-  }
-
-  top->next = malloc(sizeof(struct stack));
-  top->next->previous = top;
-  top = top->next;
-  top->table = entry;
-  return 0;
-}
-
-int leave() {
-  if (!bottom)
-    return -1;
-  top = top->previous;
-  free(top->next);
-  top->next = NULL;
-  return 0;
 }

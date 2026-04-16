@@ -24,6 +24,8 @@ typedef enum {
   NODE_IDENTIFYER,
   NODE_PARAMETER_DECLARATION,
   NODE_FUNCTION_DECLARATION,
+  NODE_FUNCTION_CALL,
+  NODE_PARAMETER,
   NODE_ROOT
 } ast_type;
 
@@ -80,6 +82,14 @@ typedef struct ast {
       ast *name;
       ast *next_param;
     } PARAMETER_DECLARATION;
+    struct FUNCTION_CALL {
+      char *name;
+      ast *params;
+    } FUNCTION_CALL;
+    struct PARAMETER {
+      ast *expression;
+      ast *next_param;
+    } PARAMETER;
   } data;
 } ast;
 
