@@ -450,3 +450,16 @@ ast *parse_block() {
 }
 
 ast *parse_function_call() { return NULL; }
+
+ast *parse_return() {
+  if (expect(KEYWORD_RETURN))
+    return NULL;
+
+  ast *expression = parse_expression(0);
+  if (!expression)
+    return NULL;
+  ast *node_return = malloc(sizeof(ast));
+  node_return->type = NODE_RETURN;
+  node_return->data.RETURN.expression = expression;
+  return node_return;
+}

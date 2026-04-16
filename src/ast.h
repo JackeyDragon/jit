@@ -26,6 +26,7 @@ typedef enum {
   NODE_FUNCTION_DECLARATION,
   NODE_FUNCTION_CALL,
   NODE_PARAMETER,
+  NODE_RETURN,
   NODE_ROOT
 } ast_type;
 
@@ -90,6 +91,9 @@ typedef struct ast {
       ast *expression;
       ast *next_param;
     } PARAMETER;
+    struct RETURN {
+      ast *expression;
+    } RETURN;
   } data;
 } ast;
 
