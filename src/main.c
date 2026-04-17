@@ -95,12 +95,10 @@ int main(int argc, char *argv[]) {
 
       ast *tree = parse_statement();
       if (!tree) {
-        fprintf(stderr, "DEBUG: file mode parse returned NULL\n");
         printf("continue\n");
         line = NULL;
         continue;
       }
-      fprintf(stderr, "DEBUG: file mode parsed ast: %s\n", code_print_statement(tree));
       exec(tree);
     }
     print_table();
@@ -109,82 +107,35 @@ int main(int argc, char *argv[]) {
       free(line);
 
   } else {
-    char buffer[8192] = {0};
-    int brace_depth = 0;
 
     while (1) {
       if (input == NULL) {
-        char *prompt = brace_depth > 0 ? "| " : "> ";
-        input = readline(prompt);
+        input = readline("> ");
         if (!input || strlen(input) == 0) {
-          if (brace_depth > 0) {
-            printf("error: unclosed block\n");
-            input = NULL;
-            buffer[0] = '\0';
-            brace_depth = 0;
-            continue;
-          }
           printf("Goodbye!\n");
           break;
         }
       }
 
-      int open_braces = 0;
-      int close_braces = 0;
-      for (int i = 0; input[i]; i++) {
-        if (input[i] == '{') open_braces++;
-        if (input[i] == '}') close_braces++;
-      }
-      brace_depth += open_braces - close_braces;
-
-      if (buffer[0] == '\0') {
-        strncpy(buffer, input, 8191);
-      } else {
-        strncat(buffer, "\n", 8191);
-        strncat(buffer, input, 8191);
-      }
-
-      if (brace_depth > 0) {
-        input = NULL;
-        continue;
-      }
-
-      char combined[8192] = {0};
-      int pos = 0;
-      for (int i = 0; buffer[i]; i++) {
-        if (buffer[i] != '\n' && buffer[i] != '\r') {
-          combined[pos++] = buffer[i];
-        }
-      }
-
-      struct token *head = tokinize(combined);
+      struct token *head = tokinize(input);
+      // print_tokens(head);
       current = head;
-      fprintf(stderr, "DEBUG: input='%s'\n", combined);
-      while (current) {
-        fprintf(stderr, "DEBUG: token type=%s value=%s\n", token_type_to_string(current->type), current->value);
-        current = current->next;
-      }
-      current = head;
-      if (strcmp(combined, "list") == 0) {
+      if (strcmp(input, "list") == 0) {
         code_print_all();
         input = NULL;
-        buffer[0] = '\0';
         continue;
       }
       ast *tree = parse_statement();
       if (!tree) {
-        fprintf(stderr, "DEBUG: parse_statement returned NULL\n");
         printf("syntax error\n");
         input = NULL;
-        buffer[0] = '\0';
         continue;
       }
 
-      fprintf(stderr, "DEBUG: parsed ast: %s\n", code_print_statement(tree));
+      // todo semantic analysis
       exec(tree);
       print_table();
       input = NULL;
-      buffer[0] = '\0';
     }
   }
 

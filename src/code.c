@@ -105,7 +105,7 @@ static char *print_expr_rec(ast *node, int depth) {
              print_expr_rec(node->data.EXPRESSION.lhs, depth + 1));
     snprintf(rhs_result, 128, "%s",
              print_expr_rec(node->data.EXPRESSION.rhs, depth + 1));
-    snprintf(buf, 512, "%s %s %s", lhs_result, op_str, rhs_result);
+    snprintf(buf, 256, "%s %s %s", lhs_result, op_str, rhs_result);
     return buf;
   }
   default:
@@ -119,7 +119,7 @@ char *code_print_statement(ast *node) {
   buf[0] = '\0';
 
   while (node) {
-    char stmt[16384] = "";
+    char stmt[256] = "";
 
     switch (node->type) {
     case NODE_DECLAR: {
@@ -130,8 +130,8 @@ char *code_print_statement(ast *node) {
       break;
     }
     case NODE_ASSIGN: {
-      char lhs[4096];
-      char rhs[4096];
+      char lhs[256];
+      char rhs[256];
       snprintf(lhs, sizeof(lhs), "%s",
                code_print_expr(node->data.ASSIGN.identifyer));
       snprintf(rhs, sizeof(rhs), "%s",

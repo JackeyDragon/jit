@@ -113,13 +113,6 @@ ast *clone_ast(ast *source) {
   case NODE_KEYWORD:
   case NODE_BRACKET_OPEN:
   case NODE_BRACKET_CLOSE:
-  case NODE_EQUALS_SIGN:
-  case NODE_TYPE:
-  case NODE_PARAMETER_DECLARATION:
-  case NODE_FUNCTION_DECLARATION:
-  case NODE_FUNCTION_CALL:
-  case NODE_PARAMETER:
-  case NODE_RETURN:
     break;
   }
 
