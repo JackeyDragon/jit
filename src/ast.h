@@ -27,6 +27,7 @@ typedef enum {
   NODE_FUNCTION_CALL,
   NODE_PARAMETER,
   NODE_RETURN,
+  NODE_LABLE,
   NODE_ROOT
 } ast_type;
 
@@ -62,7 +63,7 @@ typedef struct ast {
       ast *else_body;
     } IF;
     struct GOTO {
-      ast *expression;
+      ast *identifyer;
     } GOTO;
     struct BLOCK {
       ast **array;
@@ -94,6 +95,9 @@ typedef struct ast {
     struct RETURN {
       ast *expression;
     } RETURN;
+    struct LABLE {
+      ast *identifyer;
+    } LABLE;
   } data;
 } ast;
 

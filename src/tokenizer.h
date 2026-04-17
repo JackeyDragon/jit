@@ -17,7 +17,7 @@ enum token_type {
   LITERAL_ARRAY_START,
   LITERAL_ARRAY_END,
   SEMICOLON,
-  COLON,
+  COMMA,
   ADD,
   MINUS,
   MULT,
@@ -30,6 +30,7 @@ enum token_type {
   BRACKET_CLOSE,
   CURLY_BRACKET_OPEN,
   CURLY_BRACKET_CLOSE,
+  COLON,
   UNKNOWN
 };
 

@@ -1,4 +1,5 @@
 #include "symbol_table.h"
+#include "ast.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,14 +24,23 @@ typedef struct stack {
 #define CMPR_FN vt_cmpr_string
 #include "verstable.h"
 
+#define NAME lable_map
+#define KEY_TY char *
+#define VAL_TY ast *
+#define HASH_FN vt_hash_string
+#define CMPR_FN vt_cmpr_string
+#include "verstable.h"
+
 value_map global_scope;
 function_map functions;
+lable_map lables;
 
 stack *bottom = NULL;
 stack *top = NULL;
 
-void init_table() { 
+void init_table() {
   value_map_init(&global_scope);
+  lable_map_init(&lables);
   function_map_init(&functions);
 }
 
@@ -153,17 +163,22 @@ int insert_function(ast *func_ast) {
   }
 
   function *func = malloc(sizeof(function));
-  func->name = func_ast->data.FUNCTION_DECLARATION.identifyer->data.IDENTIFYER.name;
-  func->return_type = func_ast->data.FUNCTION_DECLARATION.return_type->data.TYPE.type;
+  func->name =
+      func_ast->data.FUNCTION_DECLARATION.identifyer->data.IDENTIFYER.name;
+  func->return_type =
+      func_ast->data.FUNCTION_DECLARATION.return_type->data.TYPE.type;
   func->code_block = func_ast->data.FUNCTION_DECLARATION.block;
 
-  func->parameter_count = count_parameters(func_ast->data.FUNCTION_DECLARATION.parameter);
+  func->parameter_count =
+      count_parameters(func_ast->data.FUNCTION_DECLARATION.parameter);
   func->parameter = malloc(sizeof(parameter) * func->parameter_count);
 
   ast *param_ast = func_ast->data.FUNCTION_DECLARATION.parameter;
   for (int i = 0; i < func->parameter_count; i++) {
-    func->parameter[i].name = param_ast->data.PARAMETER_DECLARATION.name->data.IDENTIFYER.name;
-    func->parameter[i].type = param_ast->data.PARAMETER_DECLARATION.type->data.TYPE.type;
+    func->parameter[i].name =
+        param_ast->data.PARAMETER_DECLARATION.name->data.IDENTIFYER.name;
+    func->parameter[i].type =
+        param_ast->data.PARAMETER_DECLARATION.type->data.TYPE.type;
     param_ast = param_ast->data.PARAMETER_DECLARATION.next_param;
   }
 
@@ -174,6 +189,23 @@ int insert_function(ast *func_ast) {
 function *lookup_function(char *name) {
   function_map_itr it = function_map_get(&functions, name);
   if (!function_map_is_end(it)) {
+    return it.data->val;
+  }
+  return NULL;
+}
+
+int insert_lable(ast *statement) {
+  if (statement->type != NODE_LABLE)
+    return -1;
+  lable_map_insert(&lables,
+                   statement->data.LABLE.identifyer->data.IDENTIFYER.name,
+                   statement);
+  return 0;
+}
+
+ast *lookup_lable(char *name) {
+  lable_map_itr it = lable_map_get(&lables, name);
+  if (!lable_map_is_end(it)) {
     return it.data->val;
   }
   return NULL;

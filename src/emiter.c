@@ -210,19 +210,13 @@ int exec_if() {
 
 int exec_goto() {
   int status = 0;
-  value tmp = eval_expression(current_statement->data.GOTO.expression, &status);
-  if (tmp.type != INT) {
-    printf("error: goto requires int\n");
-    return 1;
-  }
-  int line = tmp.value.i;
-  ast *line_code = code_get_line(line);
-  if (!line_code) {
+  ast *stmt = lookup_lable(
+      current_statement->data.GOTO.identifyer->data.IDENTIFYER.name);
+  if (!stmt) {
     printf("error: invalid goto target\n");
     return 1;
   }
-  set_current_line(line);
-  current_statement = line_code;
+  current_statement = stmt;
   return status;
 }
 
@@ -254,6 +248,9 @@ int exec_declare_function() {
 
   return 0;
 }
+
+int exec_lable() { return insert_lable(current_statement); }
+
 int execute_statement() {
   while (1) {
     switch (current_statement->type) {
@@ -275,6 +272,9 @@ int execute_statement() {
     case NODE_FUNCTION_DECLARATION:
       exec_declare_function();
       break;
+    case NODE_LABLE:
+      exec_lable();
+      break;
     default:
       printf("bad statement\n");
       return 1;
@@ -285,23 +285,19 @@ int execute_statement() {
       current_statement = current_statement->next_statement;
       continue;
     } else {
-      int next_line_num = code_get_current_line() + 1;
-      ast *next_line = code_get_line(next_line_num);
-      if (next_line != NULL) {
-        set_current_line(next_line_num);
-        current_statement = next_line;
-        continue;
-      } else {
-        break;
-      }
+      break;
     }
   }
+
   return 0;
 }
 
 int exec(ast *statement) {
   ast *clone = clone_ast(statement);
   current_statement = clone;
-  code_add(clone);
+  while (clone) {
+    code_add(clone);
+    clone = clone->next_statement;
+  }
   return execute_statement();
 }

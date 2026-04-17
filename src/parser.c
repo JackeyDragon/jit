@@ -14,6 +14,8 @@ ast *parse_if();
 ast *parse_function_declaration();
 ast *parse_block();
 ast *parse_function_call();
+ast *parse_identifyer();
+ast *parse_lable();
 
 struct token *current;
 
@@ -115,7 +117,7 @@ ast *parse_goto() {
 
   current = current->next;
 
-  ast_goto->data.GOTO.expression = parse_expression(0);
+  ast_goto->data.GOTO.identifyer = parse_identifyer();
   ast_goto->next_statement = NULL;
 
   if (current == NULL || current->type != SEMICOLON) {
@@ -149,6 +151,8 @@ ast *parse_statement() {
         stmt = parse_assignment_ast();
       } else if (peek && peek->type == BRACKET_OPEN) {
         stmt = parse_function_call();
+      } else if (peek && peek->type == COLON) {
+        stmt = parse_lable();
       } else {
         // can this go?
         stmt = parse_expression(0);
@@ -308,7 +312,7 @@ ast *parse_parameter_declaration() {
 
   ast *tail = param;
 
-  while (current && current->type == COLON) {
+  while (current && current->type == COMMA) {
     current = current->next;
 
     type = parse_type();
@@ -461,5 +465,23 @@ ast *parse_return() {
   ast *node_return = malloc(sizeof(ast));
   node_return->type = NODE_RETURN;
   node_return->data.RETURN.expression = expression;
+
+  if (current == NULL || current->type != SEMICOLON) {
+    print("missing semicolon");
+    return NULL;
+  }
+
   return node_return;
+}
+
+ast *parse_lable() {
+  ast *name = parse_identifyer();
+  if (expect(COLON)) {
+    free(name);
+    return NULL;
+  }
+  ast *lable = malloc(sizeof(ast));
+  lable->type = NODE_LABLE;
+  lable->data.LABLE.identifyer = name;
+  return lable;
 }

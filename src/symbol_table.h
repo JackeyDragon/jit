@@ -23,3 +23,5 @@ int enter(void);
 int leave(void);
 int insert_function(ast *func);
 function *lookup_function(char *name);
+ast *lookup_lable(char *name);
+int insert_lable(ast *statement);

@@ -27,6 +27,8 @@ const char *token_type_to_string(enum token_type type) {
     return "TYPE_FLOAT";
   case SEMICOLON:
     return "SEMICOLON";
+  case COMMA:
+    return "COMMA";
   case ADD:
     return "ADD";
   case MINUS:
@@ -220,8 +222,15 @@ struct token *tokinize(char *string) {
       break;
     } else if (strncmp(string + pos, ",", 1) == 0) {
 
-      token->type = COLON;
+      token->type = COMMA;
       token->value = ",";
+      pos++;
+
+      break;
+    } else if (strncmp(string + pos, ":", 1) == 0) {
+
+      token->type = COLON;
+      token->value = ":";
       pos++;
 
       break;
