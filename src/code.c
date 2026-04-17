@@ -13,13 +13,16 @@ int code_init(void) {
   return 0;
 }
 static ast *head = NULL;
+static ast *tail = NULL;
 static int current_line = -1;
 
 int code_add(ast *statement) {
   if (!head) {
-    head = statement;
+    head = tail = statement;
   } else {
-    head->next_statement = statement;
+    tail->next_statement = statement;
+    while (tail->next_statement)
+      tail = tail->next_statement;
   }
   return current_line;
 }

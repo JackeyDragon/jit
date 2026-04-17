@@ -216,7 +216,11 @@ int exec_goto() {
     printf("error: invalid goto target\n");
     return 1;
   }
-  current_statement = stmt;
+  if (!stmt->next_statement) {
+    print("No statement after lable");
+    return 1;
+  }
+  current_statement = stmt->next_statement;
   return status;
 }
 
@@ -280,9 +284,9 @@ int execute_statement() {
       return 1;
     }
 
-    if (current_statement != NULL &&
-        current_statement->next_statement != NULL) {
-      current_statement = current_statement->next_statement;
+    current_statement = current_statement->next_statement;
+
+    if (current_statement != NULL) {
       continue;
     } else {
       break;
@@ -293,11 +297,7 @@ int execute_statement() {
 }
 
 int exec(ast *statement) {
-  ast *clone = clone_ast(statement);
-  current_statement = clone;
-  while (clone) {
-    code_add(clone);
-    clone = clone->next_statement;
-  }
+  current_statement = statement;
+  code_add(statement);
   return execute_statement();
 }

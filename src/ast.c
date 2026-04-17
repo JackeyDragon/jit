@@ -90,7 +90,12 @@ ast *clone_ast(ast *source) {
     ast_new->next_statement = clone_ast(source->next_statement);
     break;
   case NODE_GOTO:
-    ast_new->data.GOTO.expression = clone_ast(source->data.GOTO.expression);
+    ast_new->data.GOTO.identifyer = clone_ast(source->data.GOTO.identifyer);
+    ast_new->next_statement = clone_ast(source->next_statement);
+    break;
+  case NODE_LABLE:
+    ast_new->data.LABLE.identifyer = clone_ast(source->data.LABLE.identifyer);
+    ast_new->next_statement = clone_ast(source->next_statement);
     break;
   case NODE_ARRAY:
   case NODE_ARRAY_ACCESS:
