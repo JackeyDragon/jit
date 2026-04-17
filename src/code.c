@@ -21,9 +21,10 @@ int code_add(ast *statement) {
     head = tail = statement;
   } else {
     tail->next_statement = statement;
-    while (tail->next_statement)
-      tail = tail->next_statement;
   }
+  while (tail->next_statement)
+    tail = tail->next_statement;
+
   return current_line;
 }
 
