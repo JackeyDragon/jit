@@ -131,6 +131,7 @@ ast *parse_goto() {
 ast *parse_statement() {
   if (!current)
     return NULL;
+  fprintf(stderr, "DEBUG: parse_statement start, type=%s\n", token_type_to_string(current->type));
 
   ast *first = NULL;
   ast *tail = NULL;
@@ -138,7 +139,14 @@ ast *parse_statement() {
   while (current && current->type != CURLY_BRACKET_CLOSE) {
     ast *stmt = NULL;
 
-    if (current->type == TYPE_INT || current->type == TYPE_FLOAT) {
+    if (current->type == CURLY_BRACKET_OPEN) {
+      current = current->next;
+      stmt = parse_statement();
+      if (current && current->type == CURLY_BRACKET_CLOSE) {
+        current = current->next;
+      }
+      continue;
+    } else if (current->type == TYPE_INT || current->type == TYPE_FLOAT) {
       struct token *peek = current->next->next;
       if (peek->type == TOKEN_ASSIGN) {
         stmt = parse_declaration_ast();
