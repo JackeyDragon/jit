@@ -71,6 +71,23 @@ ast *parse_expression(int min_bp) {
       lhs->type = NODE_FUNCTION_CALL;
       lhs->data.FUNCTION_CALL.name = fn_name;
       lhs->data.FUNCTION_CALL.params = args;
+    } else if (current->next && current->next->type == SQUARE_BRACKET_OPEN) {
+      char *arr_name = current->value;
+      current = current->next; // consume [
+      current = current->next; // consume [
+      ast *index = parse_expression(0);
+      if (!current || current->type != SQUARE_BRACKET_CLOSE) {
+        print("expected ]");
+        return NULL;
+      }
+      current = current->next;
+      
+      lhs = malloc(sizeof(ast));
+      lhs->type = NODE_ARRAY_ACCESS;
+      lhs->data.ARRAY_ACCESS.identifyer = malloc(sizeof(ast));
+      lhs->data.ARRAY_ACCESS.identifyer->type = NODE_IDENTIFYER;
+      lhs->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name = arr_name;
+      lhs->data.ARRAY_ACCESS.index = index;
     } else {
       lhs = malloc(sizeof(ast));
       lhs->type = NODE_IDENTIFYER;

@@ -20,7 +20,7 @@ typedef struct value {
   union {
     int i;
     float f;
-    void *array;
+    void *data;
   } value;
 } value;
 

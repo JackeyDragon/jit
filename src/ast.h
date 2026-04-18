@@ -62,6 +62,10 @@ typedef struct ast {
       ast *identifyer;
       ast *expression;
     } ASSIGN;
+    struct ARRAY_ACCESS {
+      ast *identifyer;
+      ast *index;
+    } ARRAY_ACCESS;
     struct IF {
       ast *condition;
       ast *if_body;

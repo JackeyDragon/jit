@@ -143,6 +143,35 @@ value eval_expression(ast *expresion, int *status) {
     }
     return *val;
   }
+  if (expresion->type == NODE_ARRAY_ACCESS) {
+    value *arr = lookup(expresion->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name);
+    if (!arr) {
+      (*status) = 1;
+      printf("error: array '%s' not found\n", expresion->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name);
+      return ERROR_VALUE;
+    }
+    if (!arr->array) {
+      (*status) = 1;
+      printf("error: '%s' is not an array\n", expresion->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name);
+      return ERROR_VALUE;
+    }
+    value index_val = eval_expression(expresion->data.ARRAY_ACCESS.index, status);
+    if (*status != 0) {
+      return ERROR_VALUE;
+    }
+    if (index_val.type != INT) {
+      (*status) = 1;
+      printf("error: array index must be int\n");
+      return ERROR_VALUE;
+    }
+    if (index_val.value.i < 0 || index_val.value.i >= arr->size) {
+      (*status) = 1;
+      printf("error: array index out of bounds\n");
+      return ERROR_VALUE;
+    }
+    value *elements = (value *)arr->value.data;
+    return elements[index_val.value.i];
+  }
   if (expresion->type != NODE_EXPRESION && expresion->type != NODE_OPERATION) {
     (*status) = 1;
     return ERROR_VALUE;
@@ -347,7 +376,7 @@ int declare() {
       .type = declared_type,
       .array = true,
       .size = array_count,
-      .value.array = elements
+      .value.data = elements
     };
     value *val = valuedup(&arr_val);
     insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name, val);
