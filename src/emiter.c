@@ -93,7 +93,7 @@ value exec_function_call(function *function) {
     value val = eval_expression(provided, &status);
     val.type = function->parameter[i].type;
     insert(function->parameter[i].name, &val);
-    provided = provided->next_statement;
+    provided = provided->data.PARAMETER.next_param;
   }
 
   if (status)
@@ -111,8 +111,12 @@ value eval_expression(ast *expresion, int *status) {
     return expresion->data.LITTERAL.value;
   }
   if (expresion->type == NODE_FUNCTION_CALL) {
-    return exec_function_call(
-        lookup_function(expresion->data.FUNCTION_CALL.name));
+    function *fn = lookup_function(expresion->data.FUNCTION_CALL.name);
+    if (!fn) {
+      (*status) = 1;
+      return ERROR_VALUE;
+    }
+    return exec_function_call(fn);
   }
   if (expresion->type == NODE_IDENTIFYER) {
     value *val = lookup(expresion->data.IDENTIFYER.name);

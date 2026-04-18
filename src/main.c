@@ -99,6 +99,9 @@ int main(int argc, char *argv[]) {
         line = NULL;
         continue;
       }
+      printf("=== AST ===\n");
+      print_ast(tree, 0);
+      printf("==========\n");
       exec(tree);
     }
     print_table();
@@ -131,6 +134,9 @@ int main(int argc, char *argv[]) {
         input = NULL;
         continue;
       }
+      printf("=== AST ===\n");
+      print_ast(tree, 0);
+      printf("==========\n");
 
       // todo semantic analysis
       exec(tree);

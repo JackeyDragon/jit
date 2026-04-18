@@ -191,8 +191,26 @@ void print_ast(ast *node, int depth) {
     printf("PARAMETER_DECLARATION: %s\n",
            node->data.PARAMETER_DECLARATION.name->data.IDENTIFYER.name);
     break;
+  case NODE_FUNCTION_CALL:
+    printf("FUNCTION_CALL: %s\n", node->data.FUNCTION_CALL.name);
+    break;
+  case NODE_RETURN:
+    printf("RETURN\n");
+    break;
+  case NODE_PARAMETER:
+    printf("PARAMETER\n");
+    break;
   default:
     printf("UNKNOWN (type=%d)\n", node->type);
+  }
+  if (node->type == NODE_RETURN && node->data.RETURN.expression) {
+    print_ast(node->data.RETURN.expression, depth + 1);
+  }
+  if (node->type == NODE_PARAMETER && node->data.PARAMETER.expression) {
+    print_ast(node->data.PARAMETER.expression, depth + 1);
+  }
+  if (node->type == NODE_FUNCTION_CALL && node->data.FUNCTION_CALL.params) {
+    print_ast(node->data.FUNCTION_CALL.params, depth + 1);
   }
   if (node->type == NODE_OPERATION || node->type == NODE_EXPRESION) {
     print_ast(node->data.EXPRESSION.lhs, depth + 1);

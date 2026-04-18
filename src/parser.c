@@ -57,9 +57,8 @@ ast *parse_expression(int min_bp) {
   case IDENTIFYER:
     if (current->next && current->next->type == BRACKET_OPEN) {
       char *fn_name = current->value;
-      current = current->next;
-      if (expect(BRACKET_OPEN))
-        return NULL;
+      current = current->next; // consume function name
+      current = current->next; // consume (
       ast *args = parse_function_call_arguments();
       if (!current || current->type != BRACKET_CLOSE) {
         print("expected )");
@@ -481,15 +480,16 @@ ast *parse_function_call_arguments() {
   if (!current || current->type == BRACKET_CLOSE)
     return NULL;
 
+  ast *first = NULL;
   ast *tail = NULL;
-  ast *params = malloc(sizeof(ast));
-  tail = params;
+
   ast *expr = parse_expression(0);
   if (!expr)
     return NULL;
 
-  params->data.PARAMETER.expression = expr;
-  params->type = NODE_PARAMETER;
+  first = tail = expr;
+  first->type = NODE_PARAMETER;
+  first->data.PARAMETER.expression = expr;
 
   while (current && current->type == COMMA) {
     current = current->next;
@@ -502,7 +502,7 @@ ast *parse_function_call_arguments() {
     tail->data.PARAMETER.expression = expr;
   }
 
-  return params;
+  return first;
 }
 
 ast *parse_function_call() {
