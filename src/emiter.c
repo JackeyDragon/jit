@@ -92,9 +92,10 @@ value exec_function_call(function *function, ast *call) {
   int status = 0;
   for (int i = 0; i < function->parameter_count && provided; i++) {
     value val = eval_expression(provided->data.PARAMETER.expression, &status);
-    //val.type = function->parameter[i].type;
-    if(val.type != function->parameter[i].type) return ERROR_VALUE;
-    insert(function->parameter[i].name, &val);
+    // val.type = function->parameter[i].type;
+    if (val.type != function->parameter[i].type)
+      return ERROR_VALUE;
+    insert(function->parameter[i].name, valuedup(&val));
     provided = provided->data.PARAMETER.next_param;
   }
 
