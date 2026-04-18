@@ -244,6 +244,16 @@ struct token *tokinize(char *string) {
       token->value = strdup(")");
       pos++;
       break;
+    } else if (strncmp(string + pos, "[", 1) == 0) {
+      token->type = SQUARE_BRACKET_OPEN;
+      token->value = strdup("[");
+      pos++;
+      break;
+    } else if (strncmp(string + pos, "]", 1) == 0) {
+      token->type = SQUARE_BRACKET_CLOSE;
+      token->value = strdup("}");
+      pos++;
+      break;
     } else if (strncmp(string + pos, "{", 1) == 0) {
       token->type = CURLY_BRACKET_OPEN;
       token->value = strdup("{");

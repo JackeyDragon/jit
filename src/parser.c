@@ -2,6 +2,7 @@
 #include "symbol_table.h"
 #include "tokenizer.h"
 #include "types.h"
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -254,8 +255,15 @@ ast *parse_declaration_ast() {
   decl->type = NODE_DECLAR;
   decl->data.DECLARE.type = type->data.TYPE.type;
   decl->data.DECLARE.identifyer = name;
+  decl->data.DECLARE.array = false;
+  if (current && current->type == SQUARE_BRACKET_OPEN) {
+    decl->data.DECLARE.array = true;
+    decl->data.DECLARE.size = parse_expression(0);
+  }
 
-  if (!current || current->type != TOKEN_ASSIGN) {
+  if (!current || current->type != TOKEN_ASSIGN ||
+      (decl->data.DECLARE.array && !decl->data.DECLARE.size) ||
+      (decl->data.DECLARE.array && expect(SQUARE_BRACKET_CLOSE))) {
     free(name);
     free(decl);
     free(type);

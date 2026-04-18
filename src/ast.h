@@ -51,6 +51,8 @@ typedef struct ast {
     struct DECLARE {
       ast *identifyer;
       build_in_types type;
+      bool array;
+      ast *size; // array size
       ast *expression;
     } DECLARE;
     struct ASSIGN {

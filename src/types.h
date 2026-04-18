@@ -13,6 +13,7 @@ typedef enum build_in_types {
 } build_in_types;
 typedef struct value {
   build_in_types type;
+  bool array;
   int size;
   union {
     int i;
