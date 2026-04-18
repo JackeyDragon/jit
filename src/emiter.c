@@ -75,11 +75,32 @@ value exec_block(ast *block) {
   ast *tmp = current_statement;
   current_statement = block->data.BLOCK.array[0];
   return_value = NULL;
-  enter();
+
   for (int i = 0; i < block->data.BLOCK.count; i++) {
-    EXEC_STATEMENT(block->data.BLOCK.array[i]);
-    if (return_value)
-      break;
+    switch (block->data.BLOCK.array[i]->type) {
+    case NODE_LABLE:
+      print("we are inserting some lable");
+      insert_lable(block->data.BLOCK.array[i]);
+      continue;
+    default:
+      continue;
+    }
+  }
+
+  enter();
+  {
+    ast *tmp = block->data.BLOCK.array[0];
+    for (int i = 0; i < block->data.BLOCK.count; i++) {
+      current_statement = block->data.BLOCK.array[i];
+      EXEC_STATEMENT(block->data.BLOCK.array[i]);
+      while (tmp != current_statement) {
+        tmp = tmp->next_statement;
+        i++;
+      }
+      tmp = block->data.BLOCK.array[0];
+      if (return_value)
+        break;
+    }
   }
   leave();
   current_statement = tmp;

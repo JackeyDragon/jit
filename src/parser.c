@@ -145,6 +145,8 @@ ast *parse_goto() {
     return NULL;
   }
 
+  current = current->next;
+
   return ast_goto;
 }
 
