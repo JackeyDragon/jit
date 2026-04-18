@@ -73,6 +73,7 @@ static int exec_return(void) {
 
 value exec_block(ast *block) {
   ast *tmp = current_statement->next_statement;
+  current_statement = block->data.BLOCK.array[0];
   return_value = NULL;
   enter();
   for (int i = 0; i < block->data.BLOCK.count; i++) {
@@ -85,13 +86,14 @@ value exec_block(ast *block) {
   return *return_value;
 }
 
-value exec_function_call(function *function) {
+value exec_function_call(function *function, ast *call) {
   enter();
-  ast *provided = current_statement->data.FUNCTION_CALL.params;
+  ast *provided = call->data.FUNCTION_CALL.params;
   int status = 0;
   for (int i = 0; i < function->parameter_count && provided; i++) {
-    value val = eval_expression(provided, &status);
-    val.type = function->parameter[i].type;
+    value val = eval_expression(provided->data.PARAMETER.expression, &status);
+    //val.type = function->parameter[i].type;
+    if(val.type != function->parameter[i].type) return ERROR_VALUE;
     insert(function->parameter[i].name, &val);
     provided = provided->data.PARAMETER.next_param;
   }
@@ -116,7 +118,7 @@ value eval_expression(ast *expresion, int *status) {
       (*status) = 1;
       return ERROR_VALUE;
     }
-    return exec_function_call(fn);
+    return exec_function_call(fn, expresion);
   }
   if (expresion->type == NODE_IDENTIFYER) {
     value *val = lookup(expresion->data.IDENTIFYER.name);
