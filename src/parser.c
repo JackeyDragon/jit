@@ -14,6 +14,7 @@ ast *parse_if();
 ast *parse_function_declaration();
 ast *parse_block();
 ast *parse_function_call();
+ast *parse_function_call_arguments();
 ast *parse_identifyer();
 ast *parse_lable();
 ast *parse_return();
@@ -54,10 +55,28 @@ ast *parse_expression(int min_bp) {
     current = current->next;
   } break;
   case IDENTIFYER:
-    lhs = malloc(sizeof(ast));
-    lhs->type = NODE_IDENTIFYER;
-    lhs->data.IDENTIFYER.name = current->value;
-    current = current->next;
+    if (current->next && current->next->type == BRACKET_OPEN) {
+      char *fn_name = current->value;
+      current = current->next;
+      if (expect(BRACKET_OPEN))
+        return NULL;
+      ast *args = parse_function_call_arguments();
+      if (!current || current->type != BRACKET_CLOSE) {
+        print("expected )");
+        return NULL;
+      }
+      current = current->next;
+
+      lhs = malloc(sizeof(ast));
+      lhs->type = NODE_FUNCTION_CALL;
+      lhs->data.FUNCTION_CALL.name = fn_name;
+      lhs->data.FUNCTION_CALL.params = args;
+    } else {
+      lhs = malloc(sizeof(ast));
+      lhs->type = NODE_IDENTIFYER;
+      lhs->data.IDENTIFYER.name = current->value;
+      current = current->next;
+    }
     break;
   case BRACKET_OPEN:
     current = current->next;
@@ -79,6 +98,7 @@ ast *parse_expression(int min_bp) {
     switch (current->type) {
     case SEMICOLON:
     case BRACKET_CLOSE:
+    case COMMA:
       return lhs;
     case ADD:
     case DIV:
@@ -457,7 +477,57 @@ ast *parse_block() {
   return block;
 }
 
-ast *parse_function_call() { return NULL; }
+ast *parse_function_call_arguments() {
+  if (!current || current->type == BRACKET_CLOSE)
+    return NULL;
+
+  ast *tail = NULL;
+  ast *params = malloc(sizeof(ast));
+  tail = params;
+  ast *expr = parse_expression(0);
+  if (!expr)
+    return NULL;
+
+  params->data.PARAMETER.expression = expr;
+  params->type = NODE_PARAMETER;
+
+  while (current && current->type == COMMA) {
+    current = current->next;
+    expr = parse_expression(0);
+    if (!expr)
+      return NULL;
+    tail->data.PARAMETER.next_param = malloc(sizeof(ast));
+    tail->type = NODE_PARAMETER;
+    tail = tail->data.PARAMETER.next_param;
+    tail->data.PARAMETER.expression = expr;
+  }
+
+  return params;
+}
+
+ast *parse_function_call() {
+  ast *name = parse_identifyer();
+  if (!name || expect(BRACKET_OPEN)) {
+    if (name)
+      free(name);
+    return NULL;
+  }
+
+  ast *args = parse_function_call_arguments();
+  if (!args && (!current || current->type != BRACKET_CLOSE)) {
+    free(name);
+    return NULL;
+  }
+  if (current && current->type == BRACKET_CLOSE)
+    current = current->next;
+
+  ast *call = malloc(sizeof(ast));
+  call->type = NODE_FUNCTION_CALL;
+  call->data.FUNCTION_CALL.name = name->data.IDENTIFYER.name;
+  call->data.FUNCTION_CALL.params = args;
+  free(name);
+  return call;
+}
 
 ast *parse_return() {
   if (expect(KEYWORD_RETURN))
