@@ -72,7 +72,7 @@ static int exec_return(void) {
 }
 
 value exec_block(ast *block) {
-  ast *tmp = current_statement->next_statement;
+  ast *tmp = current_statement;
   current_statement = block->data.BLOCK.array[0];
   return_value = NULL;
   enter();

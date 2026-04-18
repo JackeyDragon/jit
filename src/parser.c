@@ -418,47 +418,23 @@ ast *parse_block() {
     return NULL;
   }
 
-  typedef struct tmp_list tmp_list;
-
-  typedef struct tmp_list {
-    ast *stmt;
-    tmp_list *next;
-  } tmp_list;
-  tmp_list *head = NULL;
-  tmp_list *tail = NULL;
-  int count = 0;
   if (!current || current->type == CURLY_BRACKET_CLOSE)
     return NULL;
-  while (current && current->type != CURLY_BRACKET_CLOSE) {
-    tmp_list *node = malloc(sizeof(tmp_list));
-    node->stmt = parse_statement();
-    node->next = NULL;
 
-    if (!node->stmt) {
-      free(node);
-      while (head) {
-        tmp_list *next = head->next;
-        free(head);
-        head = next;
-      }
-      return NULL;
-    }
+  ast *node = parse_statement();
 
-    if (!head) {
-      head = tail = node;
-    } else {
-      tail->next = node;
-      tail = node;
-    }
+  if (!node) {
+    return NULL;
+  }
+
+  ast *tmp = node;
+  int count = 0;
+  while (tmp) {
     count++;
+    tmp = tmp->next_statement;
   }
 
   if (expect(CURLY_BRACKET_CLOSE)) {
-    while (head) {
-      tmp_list *next = head->next;
-      free(head);
-      head = next;
-    }
     return NULL;
   }
 
@@ -467,11 +443,10 @@ ast *parse_block() {
   block->data.BLOCK.count = count;
   block->data.BLOCK.array = malloc(sizeof(ast *) * (count > 0 ? count : 1));
   ast **array = (ast **)block->data.BLOCK.array;
-  tmp_list *tmp = head;
+
   for (int i = 0; i < count; i++) {
-    array[i] = tmp->stmt;
-    tmp_list *next = tmp->next;
-    tmp = next;
+    array[i] = node;
+    node = node->next_statement;
   }
   return block;
 }
