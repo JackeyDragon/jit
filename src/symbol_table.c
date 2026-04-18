@@ -80,7 +80,12 @@ void print_table() {
   printf("=== Global Scope ===\n");
   for (value_map_itr it = value_map_first(&global_scope); !value_map_is_end(it);
        it = value_map_next(it)) {
-    if (it.data->val->type == FLOAT) {
+    if (it.data->val->array) {
+      printf("[%s: array of %s, size %d]\n", 
+             it.data->key, 
+             it.data->val->type == FLOAT ? "float" : "int",
+             it.data->val->size);
+    } else if (it.data->val->type == FLOAT) {
       printf("[%s: float %f]\n", it.data->key, it.data->val->value.f);
     } else {
       printf("[%s: int %d]\n", it.data->key, it.data->val->value.i);
@@ -94,7 +99,12 @@ void print_table() {
     printf("Scope %d:\n", level);
     for (value_map_itr it = value_map_first(tmp->scope); !value_map_is_end(it);
          it = value_map_next(it)) {
-      if (it.data->val->type == FLOAT) {
+      if (it.data->val->array) {
+        printf("  [%s: array of %s, size %d]\n", 
+               it.data->key, 
+               it.data->val->type == FLOAT ? "float" : "int",
+               it.data->val->size);
+      } else if (it.data->val->type == FLOAT) {
         printf("  [%s: float %f]\n", it.data->key, it.data->val->value.f);
       } else {
         printf("  [%s: int %d]\n", it.data->key, it.data->val->value.i);

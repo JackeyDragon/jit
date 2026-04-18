@@ -320,12 +320,45 @@ int exec_goto() {
 
 int declare() {
   int status = 0;
-  value tmp =
-      eval_expression(current_statement->data.DECLARE.expression, &status);
+  build_in_types declared_type = current_statement->data.DECLARE.type;
+  
+  if (current_statement->data.DECLARE.array) {
+    int array_count = current_statement->data.DECLARE.array_count;
+    if (array_count == 0) {
+      printf("error: array must have at least one element\n");
+      return 1;
+    }
+    
+    value *elements = malloc(sizeof(value) * array_count);
+    for (int i = 0; i < array_count; i++) {
+      elements[i] = eval_expression(current_statement->data.DECLARE.array_values[i], &status);
+      if (status != 0) {
+        free(elements);
+        return status;
+      }
+      if (elements[i].type != declared_type) {
+        printf("error: array element %d type mismatch\n", i);
+        free(elements);
+        return 1;
+      }
+    }
+    
+    value arr_val = (value){
+      .type = declared_type,
+      .array = true,
+      .size = array_count,
+      .value.array = elements
+    };
+    value *val = valuedup(&arr_val);
+    insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name, val);
+    free(elements);
+    return 0;
+  }
+  
+  value tmp = eval_expression(current_statement->data.DECLARE.expression, &status);
   if (status != 0) {
     return status;
   }
-  build_in_types declared_type = current_statement->data.DECLARE.type;
   if (declared_type != tmp.type) {
     printf("error: cannot initialize %s variable with %s value\n",
            declared_type == FLOAT ? "float" : "int",

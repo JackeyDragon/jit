@@ -167,6 +167,8 @@ ast *parse_statement() {
         stmt = parse_declaration_ast();
       } else if (peek->type == BRACKET_OPEN) {
         stmt = parse_function_declaration();
+      } else if (peek->type == SQUARE_BRACKET_OPEN) {
+        stmt = parse_declaration_ast();
       }
     } else if (current->type == IDENTIFYER) {
       struct token *peek = current->next;
@@ -256,14 +258,26 @@ ast *parse_declaration_ast() {
   decl->data.DECLARE.type = type->data.TYPE.type;
   decl->data.DECLARE.identifyer = name;
   decl->data.DECLARE.array = false;
+  decl->data.DECLARE.size = NULL;
+  decl->data.DECLARE.expression = NULL;
+  decl->data.DECLARE.array_values = NULL;
+  decl->data.DECLARE.array_count = 0;
+
   if (current && current->type == SQUARE_BRACKET_OPEN) {
     decl->data.DECLARE.array = true;
+    current = current->next;
     decl->data.DECLARE.size = parse_expression(0);
+    if (!current || current->type != SQUARE_BRACKET_CLOSE) {
+      free(name);
+      free(decl);
+      free(type);
+      return NULL;
+    }
+    current = current->next;
   }
 
   if (!current || current->type != TOKEN_ASSIGN ||
-      (decl->data.DECLARE.array && !decl->data.DECLARE.size) ||
-      (decl->data.DECLARE.array && expect(SQUARE_BRACKET_CLOSE))) {
+      (decl->data.DECLARE.array && !decl->data.DECLARE.size)) {
     free(name);
     free(decl);
     free(type);
@@ -271,12 +285,51 @@ ast *parse_declaration_ast() {
   }
   current = current->next;
 
-  decl->data.DECLARE.expression = parse_expression(0);
+  if (decl->data.DECLARE.array && current && current->type == CURLY_BRACKET_OPEN) {
+    current = current->next;
+    int capacity = 4;
+    decl->data.DECLARE.array_values = malloc(sizeof(ast *) * capacity);
+    
+    while (current && current->type != CURLY_BRACKET_CLOSE) {
+      ast *expr = parse_expression(0);
+      if (!expr) {
+        free(decl->data.DECLARE.array_values);
+        free(name);
+        free(decl);
+        free(type);
+        return NULL;
+      }
+      if (decl->data.DECLARE.array_count >= capacity) {
+        capacity *= 2;
+        decl->data.DECLARE.array_values = realloc(decl->data.DECLARE.array_values, sizeof(ast *) * capacity);
+      }
+      decl->data.DECLARE.array_values[decl->data.DECLARE.array_count++] = expr;
+      
+      if (current && current->type == COMMA) {
+        current = current->next;
+      }
+    }
+    
+    if (!current || current->type != CURLY_BRACKET_CLOSE) {
+      for (int i = 0; i < decl->data.DECLARE.array_count; i++) {
+        free(decl->data.DECLARE.array_values[i]);
+      }
+      free(decl->data.DECLARE.array_values);
+      free(name);
+      free(decl);
+      free(type);
+      return NULL;
+    }
+    current = current->next;
+  } else {
+    decl->data.DECLARE.expression = parse_expression(0);
+  }
+
   decl->next_statement = NULL;
 
   if (current == NULL || current->type != SEMICOLON) {
-    free(decl);
     free(name);
+    free(decl);
     free(type);
     return NULL;
   }

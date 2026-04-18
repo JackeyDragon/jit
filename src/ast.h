@@ -1,6 +1,7 @@
 #ifndef AST_H
 #define AST_H
 
+#include <stdbool.h>
 #include "tokenizer.h"
 #include "types.h"
 
@@ -54,6 +55,8 @@ typedef struct ast {
       bool array;
       ast *size; // array size
       ast *expression;
+      ast **array_values;
+      int array_count;
     } DECLARE;
     struct ASSIGN {
       ast *identifyer;
