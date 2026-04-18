@@ -73,7 +73,7 @@ static int exec_return(void) {
 
 value exec_block(ast *block) {
   ast *tmp = current_statement;
-  current_statement = block->data.BLOCK.array[0];
+  ast *block_start = block->data.BLOCK.array[0];
   return_value = NULL;
 
   for (int i = 0; i < block->data.BLOCK.count; i++) {
@@ -88,19 +88,12 @@ value exec_block(ast *block) {
   }
 
   enter();
-  {
-    ast *tmp = block->data.BLOCK.array[0];
-    for (int i = 0; i < block->data.BLOCK.count; i++) {
-      current_statement = block->data.BLOCK.array[i];
-      EXEC_STATEMENT(block->data.BLOCK.array[i]);
-      while (tmp != current_statement) {
-        tmp = tmp->next_statement;
-        i++;
-      }
-      tmp = block->data.BLOCK.array[0];
-      if (return_value)
-        break;
-    }
+  current_statement = block_start;
+  while (current_statement) {
+    EXEC_STATEMENT(current_statement);
+    if (return_value)
+      break;
+    current_statement = current_statement->next_statement;
   }
   leave();
   current_statement = tmp;
