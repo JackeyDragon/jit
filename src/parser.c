@@ -16,6 +16,7 @@ ast *parse_block();
 ast *parse_function_call();
 ast *parse_identifyer();
 ast *parse_lable();
+ast *parse_return();
 
 struct token *current;
 
@@ -161,6 +162,10 @@ ast *parse_statement() {
       stmt = parse_if();
     } else if (current->type == KEYWORD_GOTO) {
       stmt = parse_goto();
+    } else if (current->type == CURLY_BRACKET_OPEN) {
+      stmt = parse_block();
+    } else if (current->type == KEYWORD_RETURN) {
+      stmt = parse_return();
     }
 
     if (!stmt)
@@ -447,7 +452,6 @@ ast *parse_block() {
   for (int i = 0; i < count; i++) {
     array[i] = tmp->stmt;
     tmp_list *next = tmp->next;
-    free(tmp);
     tmp = next;
   }
   return block;
@@ -470,6 +474,7 @@ ast *parse_return() {
     print("missing semicolon");
     return NULL;
   }
+  current = current->next;
 
   return node_return;
 }

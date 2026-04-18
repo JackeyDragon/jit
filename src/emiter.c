@@ -9,11 +9,81 @@
 #include <string.h>
 #include <time.h>
 
+static value exec_block(ast *block);
+static int exec_if(void);
+static int exec_assign(void);
+static int exec_goto(void);
+static int declare(void);
+static int exec_declare_function(void);
+static int exec_lable(void);
+static int execute_program(void);
+static int exec_return(void);
+
+#define EXEC_STATEMENT(statement)                                              \
+  switch (statement->type) {                                                   \
+  case NODE_ROOT:                                                              \
+    code_init();                                                               \
+    break;                                                                     \
+  case NODE_DECLAR:                                                            \
+    declare();                                                                 \
+    break;                                                                     \
+  case NODE_IF_CONDITION:                                                      \
+    exec_if();                                                                 \
+    break;                                                                     \
+  case NODE_ASSIGN:                                                            \
+    exec_assign();                                                             \
+    break;                                                                     \
+  case NODE_GOTO:                                                              \
+    exec_goto();                                                               \
+    continue;                                                                  \
+  case NODE_FUNCTION_DECLARATION:                                              \
+    exec_declare_function();                                                   \
+    break;                                                                     \
+  case NODE_LABLE:                                                             \
+    exec_lable();                                                              \
+    break;                                                                     \
+  case NODE_RETURN:                                                            \
+    exec_return();                                                             \
+    break;                                                                     \
+  case NODE_BLOCK:                                                             \
+    exec_block(current_statement);                                             \
+    break;                                                                     \
+  default:                                                                     \
+    printf("bad statement\n");                                                 \
+    break;                                                                     \
+  }
+
 static ast *current_statement = NULL;
+static value *return_value;
 
 ast *emiter_get_current_statement(void) { return current_statement; }
 
 void emiter_set_current_statement(ast *stmt) { current_statement = stmt; }
+
+static int exec_return(void) {
+  int status = 0;
+  value expression =
+      eval_expression(current_statement->data.RETURN.expression, &status);
+  if (status)
+    return 1;
+  value *tmp = valuedup(&expression);
+  return_value = tmp;
+  return 0;
+}
+
+value exec_block(ast *block) {
+  ast *tmp = current_statement->next_statement;
+  return_value = NULL;
+  enter();
+  for (int i = 0; i < block->data.BLOCK.count; i++) {
+    EXEC_STATEMENT(block->data.BLOCK.array[i]);
+    if (return_value)
+      break;
+  }
+  leave();
+  current_statement = tmp;
+  return *return_value;
+}
 
 value exec_function_call(function *function) {
   enter();
@@ -28,8 +98,11 @@ value exec_function_call(function *function) {
 
   if (status)
     return ERROR_VALUE;
+
+  value ret_val = exec_block(function->code_block);
+
   leave();
-  return ERROR_VALUE;
+  return ret_val;
 }
 
 value eval_expression(ast *expresion, int *status) {
@@ -255,34 +328,9 @@ int exec_declare_function() {
 
 int exec_lable() { return insert_lable(current_statement); }
 
-int execute_statement() {
+int execute_program() {
   while (1) {
-    switch (current_statement->type) {
-    case NODE_ROOT:
-      code_init();
-      break;
-    case NODE_DECLAR:
-      declare();
-      break;
-    case NODE_IF_CONDITION:
-      exec_if();
-      break;
-    case NODE_ASSIGN:
-      exec_assign();
-      break;
-    case NODE_GOTO:
-      exec_goto();
-      continue;
-    case NODE_FUNCTION_DECLARATION:
-      exec_declare_function();
-      break;
-    case NODE_LABLE:
-      exec_lable();
-      break;
-    default:
-      printf("bad statement\n");
-      return 1;
-    }
+    EXEC_STATEMENT(current_statement);
 
     current_statement = current_statement->next_statement;
 
@@ -299,5 +347,5 @@ int execute_statement() {
 int exec(ast *statement) {
   current_statement = statement;
   code_add(statement);
-  return execute_statement();
+  return execute_program();
 }
