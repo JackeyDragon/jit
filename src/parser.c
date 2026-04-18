@@ -487,9 +487,11 @@ ast *parse_function_call_arguments() {
   if (!expr)
     return NULL;
 
-  first = tail = expr;
+  first = tail = malloc(sizeof(ast));
   first->type = NODE_PARAMETER;
   first->data.PARAMETER.expression = expr;
+  first->data.PARAMETER.next_param = NULL;
+  first->next_statement = NULL;
 
   while (current && current->type == COMMA) {
     current = current->next;
@@ -497,8 +499,10 @@ ast *parse_function_call_arguments() {
     if (!expr)
       return NULL;
     tail->data.PARAMETER.next_param = malloc(sizeof(ast));
-    tail->type = NODE_PARAMETER;
     tail = tail->data.PARAMETER.next_param;
+    tail->type = NODE_PARAMETER;
+    tail->next_statement = NULL;
+    tail->data.PARAMETER.next_param = NULL;
     tail->data.PARAMETER.expression = expr;
   }
 
