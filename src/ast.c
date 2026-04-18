@@ -145,7 +145,7 @@ void print_ast(ast *node, int depth) {
     printf("  ");
   switch (node->type) {
   case NODE_DECLAR:
-    printf("DECLAR: %s\n", node->data.IDENTIFYER.name);
+    printf("DECLAR: %s\n", node->data.DECLARE.identifyer->data.IDENTIFYER.name);
     break;
   case NODE_ASSIGN:
     printf("ASSIGN: %s\n", node->data.ASSIGN.identifyer->data.IDENTIFYER.name);
@@ -209,8 +209,14 @@ void print_ast(ast *node, int depth) {
   if (node->type == NODE_PARAMETER && node->data.PARAMETER.expression) {
     print_ast(node->data.PARAMETER.expression, depth + 1);
   }
+  if (node->type == NODE_PARAMETER && node->data.PARAMETER.next_param) {
+    print_ast(node->data.PARAMETER.next_param, depth);
+  }
   if (node->type == NODE_FUNCTION_CALL && node->data.FUNCTION_CALL.params) {
     print_ast(node->data.FUNCTION_CALL.params, depth + 1);
+  }
+  if (node->type == NODE_DECLAR && node->data.DECLARE.expression) {
+    print_ast(node->data.DECLARE.expression, depth + 1);
   }
   if (node->type == NODE_OPERATION || node->type == NODE_EXPRESION) {
     print_ast(node->data.EXPRESSION.lhs, depth + 1);
