@@ -81,10 +81,8 @@ void print_table() {
   for (value_map_itr it = value_map_first(&global_scope); !value_map_is_end(it);
        it = value_map_next(it)) {
     if (it.data->val->array) {
-      printf("[%s: array of %s, size %d]\n", 
-             it.data->key, 
-             it.data->val->type == FLOAT ? "float" : "int",
-             it.data->val->size);
+      printf("[%s: array of %s, size %d]\n", it.data->key,
+             it.data->val->type == FLOAT ? "float" : "int", it.data->val->size);
     } else if (it.data->val->type == FLOAT) {
       printf("[%s: float %f]\n", it.data->key, it.data->val->value.f);
     } else {
@@ -100,8 +98,7 @@ void print_table() {
     for (value_map_itr it = value_map_first(tmp->scope); !value_map_is_end(it);
          it = value_map_next(it)) {
       if (it.data->val->array) {
-        printf("  [%s: array of %s, size %d]\n", 
-               it.data->key, 
+        printf("  [%s: array of %s, size %d]\n", it.data->key,
                it.data->val->type == FLOAT ? "float" : "int",
                it.data->val->size);
       } else if (it.data->val->type == FLOAT) {
@@ -190,6 +187,15 @@ int insert_function(ast *func_ast) {
     func->parameter[i].type =
         param_ast->data.PARAMETER_DECLARATION.type->data.TYPE.type;
     param_ast = param_ast->data.PARAMETER_DECLARATION.next_param;
+  }
+
+  function_map_insert(&functions, func->name, func);
+  return 0;
+}
+
+int insert_function_struct(function *func) {
+  if (!func || !func->name) {
+    return -1;
   }
 
   function_map_insert(&functions, func->name, func);

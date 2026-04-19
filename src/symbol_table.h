@@ -6,12 +6,16 @@ typedef struct parameter {
   build_in_types type;
 } parameter;
 
+typedef value (*builtin_fn)(value **args, int arg_count);
+
 typedef struct function {
   char *name;
   build_in_types return_type;
   ast *code_block;
   parameter *parameter;
   int parameter_count;
+  bool build_in;
+  builtin_fn c_function;
 } function;
 
 void init_table();
@@ -25,3 +29,4 @@ int insert_function(ast *func);
 function *lookup_function(char *name);
 ast *lookup_lable(char *name);
 int insert_lable(ast *statement);
+int insert_function_struct(function *func);

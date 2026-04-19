@@ -55,6 +55,7 @@ static int exec_return(void);
 
 static ast *current_statement = NULL;
 static value *return_value;
+static bool init;
 
 ast *emiter_get_current_statement(void) { return current_statement; }
 
@@ -101,6 +102,17 @@ value exec_block(ast *block) {
 }
 
 value exec_function_call(function *function, ast *call) {
+  if (function->build_in) {
+    value **params = malloc(sizeof(value *) * function->parameter_count);
+    int status = 0;
+    for (int i = 0; i < function->parameter_count; i++) {
+      value tmp = eval_expression(call->data.PARAMETER.expression, &status);
+      params[i] = valuedup(&tmp);
+      if (status)
+        return ERROR_VALUE;
+    }
+    return function->c_function(params, function->parameter_count);
+  }
   enter();
   ast *provided = call->data.FUNCTION_CALL.params;
   int status = 0;
@@ -144,18 +156,22 @@ value eval_expression(ast *expresion, int *status) {
     return *val;
   }
   if (expresion->type == NODE_ARRAY_ACCESS) {
-    value *arr = lookup(expresion->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name);
+    value *arr =
+        lookup(expresion->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name);
     if (!arr) {
       (*status) = 1;
-      printf("error: array '%s' not found\n", expresion->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name);
+      printf("error: array '%s' not found\n",
+             expresion->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name);
       return ERROR_VALUE;
     }
     if (!arr->array) {
       (*status) = 1;
-      printf("error: '%s' is not an array\n", expresion->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name);
+      printf("error: '%s' is not an array\n",
+             expresion->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name);
       return ERROR_VALUE;
     }
-    value index_val = eval_expression(expresion->data.ARRAY_ACCESS.index, status);
+    value index_val =
+        eval_expression(expresion->data.ARRAY_ACCESS.index, status);
     if (*status != 0) {
       return ERROR_VALUE;
     }
@@ -350,17 +366,18 @@ int exec_goto() {
 int declare() {
   int status = 0;
   build_in_types declared_type = current_statement->data.DECLARE.type;
-  
+
   if (current_statement->data.DECLARE.array) {
     int array_count = current_statement->data.DECLARE.array_count;
     if (array_count == 0) {
       printf("error: array must have at least one element\n");
       return 1;
     }
-    
+
     value *elements = malloc(sizeof(value) * array_count);
     for (int i = 0; i < array_count; i++) {
-      elements[i] = eval_expression(current_statement->data.DECLARE.array_values[i], &status);
+      elements[i] = eval_expression(
+          current_statement->data.DECLARE.array_values[i], &status);
       if (status != 0) {
         free(elements);
         return status;
@@ -371,20 +388,20 @@ int declare() {
         return 1;
       }
     }
-    
-    value arr_val = (value){
-      .type = declared_type,
-      .array = true,
-      .size = array_count,
-      .value.data = elements
-    };
+
+    value arr_val = (value){.type = declared_type,
+                            .array = true,
+                            .size = array_count,
+                            .value.data = elements};
     value *val = valuedup(&arr_val);
-    insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name, val);
+    insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name,
+           val);
     free(elements);
     return 0;
   }
-  
-  value tmp = eval_expression(current_statement->data.DECLARE.expression, &status);
+
+  value tmp =
+      eval_expression(current_statement->data.DECLARE.expression, &status);
   if (status != 0) {
     return status;
   }

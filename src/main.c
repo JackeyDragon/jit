@@ -1,4 +1,5 @@
 #include "ast.h"
+#include "buildin_functions.h"
 #include "code.h"
 #include "emiter.h"
 #include "symbol_table.h"
@@ -70,6 +71,7 @@ int main(int argc, char *argv[]) {
   char *input = NULL;
   init_table();
   code_init();
+  register_functions();
 
   if (argc > 1) {
     FILE *fp;

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #define ERROR_VALUE (value){.type = ERROR, .size = -1, .value.i = -1}
-#define VOID_VALUE (value){.typedef = VOID, .size = -1, .value.i = -1}
+#define VOID_VALUE (value){.type = VOID, .size = -1, .value.i = -1}
 typedef enum build_in_types {
   INT,
   FLOAT,
