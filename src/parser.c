@@ -193,6 +193,10 @@ ast *parse_statement() {
         stmt = parse_assignment_ast();
       } else if (peek && peek->type == BRACKET_OPEN) {
         stmt = parse_function_call();
+        if (stmt && (!current || current->type != SEMICOLON)) {
+          stmt = NULL;
+          break;
+        }
       } else if (peek && peek->type == COLON) {
         stmt = parse_lable();
       } else {
@@ -584,6 +588,7 @@ ast *parse_function_call() {
   call->type = NODE_FUNCTION_CALL;
   call->data.FUNCTION_CALL.name = name->data.IDENTIFYER.name;
   call->data.FUNCTION_CALL.params = args;
+  call->next_statement = NULL;
   free(name);
   return call;
 }
