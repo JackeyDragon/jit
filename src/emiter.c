@@ -15,6 +15,7 @@ static int exec_assign(void);
 static int exec_goto(void);
 static int declare(void);
 static int exec_declare_function(void);
+static int exec_function_call_statement(void);
 static int exec_lable(void);
 static int execute_program(void);
 static int exec_return(void);
@@ -38,6 +39,9 @@ static int exec_return(void);
     continue;                                                                  \
   case NODE_FUNCTION_DECLARATION:                                              \
     exec_declare_function();                                                   \
+    break;                                                                     \
+  case NODE_FUNCTION_CALL:                                                      \
+    exec_function_call_statement();                                             \
     break;                                                                     \
   case NODE_LABLE:                                                             \
     exec_lable();                                                              \
@@ -102,23 +106,27 @@ value exec_block(ast *block) {
 
 value exec_function_call(function *function, ast *call) {
   if (function->build_in) {
-    int param_count = function->parameter_count;
+    ast *param_ast = call->data.FUNCTION_CALL.params;
+    int actual_count = 0;
+    for (ast *p = param_ast; p; p = p->data.PARAMETER.next_param) {
+      actual_count++;
+    }
+    
     value **params = NULL;
-    if (param_count > 0) {
-      params = malloc(sizeof(value *) * param_count);
-      ast *param_ast = call->data.FUNCTION_CALL.params;
+    if (actual_count > 0) {
+      params = malloc(sizeof(value *) * actual_count);
       int status = 0;
-      for (int i = 0; i < param_count && param_ast; i++) {
+      int i = 0;
+      for (param_ast = call->data.FUNCTION_CALL.params; param_ast; param_ast = param_ast->data.PARAMETER.next_param) {
         value tmp = eval_expression(param_ast->data.PARAMETER.expression, &status);
-        params[i] = valuedup(&tmp);
+        params[i++] = valuedup(&tmp);
         if (status) {
           free(params);
           return ERROR_VALUE;
         }
-        param_ast = param_ast->data.PARAMETER.next_param;
       }
     }
-    value result = function->c_function(params, param_count);
+    value result = function->c_function(params, actual_count);
     free(params);
     return result;
   }
@@ -432,6 +440,16 @@ int exec_declare_function() {
 
   insert_function(current_statement);
 
+  return 0;
+}
+
+int exec_function_call_statement() {
+  function *fn = lookup_function(current_statement->data.FUNCTION_CALL.name);
+  if (!fn) {
+    printf("error: function '%s' not found\n", current_statement->data.FUNCTION_CALL.name);
+    return 1;
+  }
+  value result = exec_function_call(fn, current_statement);
   return 0;
 }
 
