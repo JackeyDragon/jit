@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -g -std=c99 -D_POSIX_C_SOURCE=200809L
-LDFLAGS =
+LDFLAGS = -lm
 
 SRCS = src/main.c src/lexer.c src/parser.c src/ast.c src/code.c src/emiter.c src/symbol_table.c src/types.c src/buildin_functions.c
 OBJS = $(SRCS:.c=.o)
