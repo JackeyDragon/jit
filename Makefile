@@ -2,12 +2,12 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g -std=c99 -D_POSIX_C_SOURCE=200809L
 LDFLAGS =
 
-SRCS = src/main.c src/lexer.c src/parser.c src/ast.c src/code.c src/emiter.c src/symbol_table.c src/types.c
+SRCS = src/main.c src/lexer.c src/parser.c src/ast.c src/code.c src/emiter.c src/symbol_table.c src/types.c src/buildin_functions.c
 OBJS = $(SRCS:.c=.o)
 TARGET = bin/jit
 
-TEST_SRCS = tests/test_lexer.c tests/test_parser.c tests/test_function.c tests/test_integration.c tests/test_symbol_table.c
-TEST_TARGETS = tests/test_lexer tests/test_parser tests/test_function tests/test_integration tests/test_symbol_table
+TEST_SRCS = tests/test_lexer.c tests/test_parser.c tests/test_function.c tests/test_function_call.c tests/test_arrays.c tests/test_integration.c tests/test_symbol_table.c
+TEST_TARGETS = tests/test_lexer tests/test_parser tests/test_function tests/test_function_call tests/test_arrays tests/test_integration tests/test_symbol_table
 
 .PHONY: all clean test unit integration benchmark
 
@@ -40,6 +40,12 @@ tests/test_function: tests/test_function.o src/parser.o src/ast.o src/lexer.o sr
 tests/test_integration: tests/test_integration.o src/parser.o src/ast.o src/lexer.o src/emiter.o src/symbol_table.o src/code.o src/types.o
 	$(CC) $(CFLAGS) -o $@ $^
 
+tests/test_function_call: tests/test_function_call.o src/parser.o src/ast.o src/lexer.o src/emiter.o src/symbol_table.o src/code.o src/types.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+tests/test_arrays: tests/test_arrays.o src/parser.o src/ast.o src/lexer.o src/emiter.o src/symbol_table.o src/code.o src/types.o
+	$(CC) $(CFLAGS) -o $@ $^
+
 tests/test_symbol_table: tests/test_symbol_table.o src/symbol_table.o src/types.o
 	$(CC) $(CFLAGS) -o $@ $^
 
@@ -53,6 +59,12 @@ tests/test_function.o: tests/test_function.c tests/test.h src/tokenizer.h src/as
 	$(CC) $(CFLAGS) -c $< -o $@
 
 tests/test_integration.o: tests/test_integration.c tests/test.h src/tokenizer.h src/ast.h src/symbol_table.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+tests/test_function_call.o: tests/test_function_call.c tests/test.h src/tokenizer.h src/ast.h src/symbol_table.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+tests/test_arrays.o: tests/test_arrays.c tests/test.h src/tokenizer.h src/ast.h src/symbol_table.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 tests/test_symbol_table.o: tests/test_symbol_table.c tests/test.h src/symbol_table.h src/types.h

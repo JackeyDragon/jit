@@ -12,7 +12,7 @@ extern void reset_table(void);
 extern void init_table(void);
 extern void print_ast(ast *node, int depth);
 
-void print_tokens(struct token *tok) {
+void print_tokens_test(struct token *tok) {
     printf("Tokens: ");
     while (tok) {
         printf("[%s:%s] ", token_type_to_string(tok->type), tok->value ? tok->value : "(null)");

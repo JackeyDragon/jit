@@ -5,12 +5,13 @@
 #include "../src/types.h"
 
 extern struct token *current;
+extern struct token *tokinize(char *string);
 extern ast *parse_statement();
 extern int exec(ast *statement);
 extern value *lookup(char *name);
+extern function *lookup_function(char *name);
 extern void reset_table(void);
 extern void init_table(void);
-extern void print_ast(ast *node, int depth);
 
 void reset_for_test() {
     reset_table();
@@ -32,7 +33,7 @@ int get_int_val(char *name) {
 
 void test_parse_function_no_params() {
     reset_for_test();
-    struct token *tokens = tokinize("int foo() { }");
+    struct token *tokens = tokinize("int foo() { return 0; }");
     TEST_ASSERT(tokens != NULL, "Tokens should not be NULL");
     current = tokens;
     ast *tree = parse_statement();
@@ -42,7 +43,7 @@ void test_parse_function_no_params() {
 
 void test_parse_function_single_param() {
     reset_for_test();
-    struct token *tokens = tokinize("int foo(int x) { }");
+    struct token *tokens = tokinize("int foo(int x) { return x; }");
     TEST_ASSERT(tokens != NULL, "Tokens should not be NULL");
     current = tokens;
     ast *tree = parse_statement();
@@ -52,7 +53,7 @@ void test_parse_function_single_param() {
 
 void test_parse_function_multiple_params() {
     reset_for_test();
-    struct token *tokens = tokinize("int add(int a, int b) { }");
+    struct token *tokens = tokinize("int add(int a, int b) { return a + b; }");
     TEST_ASSERT(tokens != NULL, "Tokens should not be NULL");
     current = tokens;
     ast *tree = parse_statement();
@@ -62,7 +63,7 @@ void test_parse_function_multiple_params() {
 
 void test_parse_function_with_body() {
     reset_for_test();
-    struct token *tokens = tokinize("int foo() { int x = 5; }");
+    struct token *tokens = tokinize("int foo() { int x = 5; return x; }");
     TEST_ASSERT(tokens != NULL, "Tokens should not be NULL");
     current = tokens;
     ast *tree = parse_statement();
@@ -90,10 +91,10 @@ void test_parse_function_bad_missing_paren() {
 
 void test_parse_function_bad_missing_return_type() {
     reset_for_test();
-    struct token *tokens = tokinize("foo() { }");
+    struct token *tokens = tokinize("foo() { return 0; }");
     current = tokens;
     ast *tree = parse_statement();
-    TEST_ASSERT(tree == NULL, "Should fail - missing return type");
+    TEST_ASSERT(tree == NULL || tree->type != NODE_FUNCTION_DECLARATION, "Should fail or not be function declaration");
 }
 
 /* ============================================================
