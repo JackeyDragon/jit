@@ -10,12 +10,17 @@ value builtin_print(value **args, int arg_count) {
 }
 
 value buildin_add(value **args, int arg_count) {
+  if (arg_count < 2) {
+    return ERROR_VALUE;
+  }
+  int a = args[0]->value.i;
+  int b = args[1]->value.i;
   return (value){
-      .array = false, .size = sizeof(int), .type = INT, .value.i = 3};
+      .array = false, .size = sizeof(int), .type = INT, .value.i = a + b};
 }
 
 void register_functions() {
-  function print_func = {.name = "print",
+  static function print_func = {.name = "print",
                          .return_type = VOID,
                          .parameter_count = 1,
                          .build_in = true,
@@ -23,11 +28,11 @@ void register_functions() {
 
   insert_function_struct(&print_func);
 
-  function add = {.name = "add",
-                  .return_type = INT,
-                  .parameter_count = 0,
-                  .build_in = true,
-                  .c_function = buildin_add};
+  static function add = {.name = "add",
+                   .return_type = INT,
+                   .parameter_count = 2,
+                   .build_in = true,
+                   .c_function = buildin_add};
 
   insert_function_struct(&add);
 }

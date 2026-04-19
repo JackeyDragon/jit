@@ -55,7 +55,6 @@ static int exec_return(void);
 
 static ast *current_statement = NULL;
 static value *return_value;
-static bool init;
 
 ast *emiter_get_current_statement(void) { return current_statement; }
 
@@ -103,15 +102,25 @@ value exec_block(ast *block) {
 
 value exec_function_call(function *function, ast *call) {
   if (function->build_in) {
-    value **params = malloc(sizeof(value *) * function->parameter_count);
-    int status = 0;
-    for (int i = 0; i < function->parameter_count; i++) {
-      value tmp = eval_expression(call->data.PARAMETER.expression, &status);
-      params[i] = valuedup(&tmp);
-      if (status)
-        return ERROR_VALUE;
+    int param_count = function->parameter_count;
+    value **params = NULL;
+    if (param_count > 0) {
+      params = malloc(sizeof(value *) * param_count);
+      ast *param_ast = call->data.FUNCTION_CALL.params;
+      int status = 0;
+      for (int i = 0; i < param_count && param_ast; i++) {
+        value tmp = eval_expression(param_ast->data.PARAMETER.expression, &status);
+        params[i] = valuedup(&tmp);
+        if (status) {
+          free(params);
+          return ERROR_VALUE;
+        }
+        param_ast = param_ast->data.PARAMETER.next_param;
+      }
     }
-    return function->c_function(params, function->parameter_count);
+    value result = function->c_function(params, param_count);
+    free(params);
+    return result;
   }
   enter();
   ast *provided = call->data.FUNCTION_CALL.params;
