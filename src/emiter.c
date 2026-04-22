@@ -92,6 +92,7 @@ value exec_block(ast *block) {
   }
 
   enter();
+  reset_labels();
   current_statement = block_start;
   while (current_statement) {
     EXEC_STATEMENT(current_statement);

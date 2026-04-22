@@ -81,7 +81,7 @@ ast *parse_expression(int min_bp) {
         return NULL;
       }
       current = current->next;
-      
+
       lhs = malloc(sizeof(ast));
       lhs->type = NODE_ARRAY_ACCESS;
       lhs->data.ARRAY_ACCESS.identifyer = malloc(sizeof(ast));
@@ -187,7 +187,11 @@ ast *parse_statement() {
       } else if (peek->type == SQUARE_BRACKET_OPEN) {
         stmt = parse_declaration_ast();
       }
-    } else if (current->type == IDENTIFYER) {
+    } else if (current->type == TYPE_ARRAY) {
+      stmt = parse_function_declaration();
+    }
+
+    else if (current->type == IDENTIFYER) {
       struct token *peek = current->next;
       if (peek && peek->type == TOKEN_ASSIGN) {
         stmt = parse_assignment_ast();
@@ -243,6 +247,14 @@ ast *parse_type() {
     type->data.TYPE.type = INT;
     type->data.TYPE.rhs = NULL;
     current = current->next;
+    break;
+  case TYPE_ARRAY:
+    if (current && current->next->type != SQUARE_BRACKET_OPEN)
+      return NULL;
+    type->data.TYPE.type = ARRAY;
+    type->data.TYPE.rhs = parse_type();
+    if (current && current->type != SQUARE_BRACKET_CLOSE)
+      return NULL;
     break;
   default:
     free(type);
@@ -306,11 +318,12 @@ ast *parse_declaration_ast() {
   }
   current = current->next;
 
-  if (decl->data.DECLARE.array && current && current->type == CURLY_BRACKET_OPEN) {
+  if (decl->data.DECLARE.array && current &&
+      current->type == CURLY_BRACKET_OPEN) {
     current = current->next;
     int capacity = 4;
     decl->data.DECLARE.array_values = malloc(sizeof(ast *) * capacity);
-    
+
     while (current && current->type != CURLY_BRACKET_CLOSE) {
       ast *expr = parse_expression(0);
       if (!expr) {
@@ -322,15 +335,16 @@ ast *parse_declaration_ast() {
       }
       if (decl->data.DECLARE.array_count >= capacity) {
         capacity *= 2;
-        decl->data.DECLARE.array_values = realloc(decl->data.DECLARE.array_values, sizeof(ast *) * capacity);
+        decl->data.DECLARE.array_values =
+            realloc(decl->data.DECLARE.array_values, sizeof(ast *) * capacity);
       }
       decl->data.DECLARE.array_values[decl->data.DECLARE.array_count++] = expr;
-      
+
       if (current && current->type == COMMA) {
         current = current->next;
       }
     }
-    
+
     if (!current || current->type != CURLY_BRACKET_CLOSE) {
       for (int i = 0; i < decl->data.DECLARE.array_count; i++) {
         free(decl->data.DECLARE.array_values[i]);
