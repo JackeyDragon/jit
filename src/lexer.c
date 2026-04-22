@@ -75,6 +75,8 @@ void is_keyword(struct token *token) {
     token->type = TYPE_FLOAT;
   } else if (strcmp(value, "int") == 0) {
     token->type = TYPE_INT;
+  } else if (strcmp(value, "array") == 0) {
+    token->type = TYPE_ARRAY;
   } else if (strcmp(value, "if") == 0) {
     token->type = KEYWORD_IF;
   } else if (strcmp(value, "goto") == 0) {
@@ -231,6 +233,18 @@ struct token *tokinize(char *string) {
 
       token->type = COLON;
       token->value = ":";
+      pos++;
+
+      break;
+    } else if (strncmp(string + pos, "[", 1) == 0) {
+      token->type = SQUARE_BRACKET_OPEN;
+      token->value = strdup("[");
+      pos++;
+
+      break;
+    } else if (strncmp(string + pos, "]", 1) == 0) {
+      token->type = SQUARE_BRACKET_CLOSE;
+      token->value = strdup("]");
       pos++;
 
       break;

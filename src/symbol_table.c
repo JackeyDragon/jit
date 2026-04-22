@@ -210,11 +210,6 @@ function *lookup_function(char *name) {
   return NULL;
 }
 
-void reset_labels() {
-  lable_map_cleanup(&lables);
-  lable_map_init(&lables);
-}
-
 int insert_lable(ast *statement) {
   if (statement->type != NODE_LABLE)
     return -1;

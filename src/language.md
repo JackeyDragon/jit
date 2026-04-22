@@ -13,13 +13,41 @@ int x = 5;
 float y = 3.14;
 ```
 
+Variables must be declared with an initializer:
+
+```c
+int x = 5;      // must have = value
+float y = 3.14; // must have = value
+```
+
+### Array Declaration
+
+```c
+int x[3] = {1, 2, 3};     // array of 3 ints
+float y[2] = {1.0, 2.0};  // array of 2 floats
+```
+
 Once declared, a variable's type cannot change. You can only assign values of the same type.
+
+Note: Variables must always be initialized:
+```c
+int x = 5;      // must have = value
+float y = 3.14; // must have = value
+int z[3] = {1, 2, 3}; // must have = {...} values
+```
 
 ### Assignment
 
 ```c
 x = 10;
 y = 2.71;
+```
+
+Variables must be declared with an initializer:
+
+```c
+int x = 5;      // must have = value
+float y = 3.14; // must have = value
 ```
 
 Variables must be declared before use.

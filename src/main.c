@@ -139,9 +139,11 @@ int main(int argc, char *argv[]) {
       printf("=== AST ===\n");
       print_ast(tree, 0);
       printf("==========\n");
+      fflush(stdout);
 
       // todo semantic analysis
       exec(tree);
+      fflush(stdout);
       print_table();
       input = NULL;
     }

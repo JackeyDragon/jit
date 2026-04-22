@@ -72,6 +72,7 @@ static int exec_return(void) {
     return 1;
   value *tmp = valuedup(&expression);
   return_value = tmp;
+  fflush(stdout);
   return 0;
 }
 
@@ -80,10 +81,10 @@ value exec_block(ast *block) {
   ast *block_start = block->data.BLOCK.array[0];
   return_value = NULL;
 
+  // reset_labels();  // labels are global, don't reset
   for (int i = 0; i < block->data.BLOCK.count; i++) {
     switch (block->data.BLOCK.array[i]->type) {
     case NODE_LABLE:
-      print("we are inserting some lable");
       insert_lable(block->data.BLOCK.array[i]);
       continue;
     default:
@@ -92,7 +93,6 @@ value exec_block(ast *block) {
   }
 
   enter();
-  reset_labels();
   current_statement = block_start;
   while (current_statement) {
     EXEC_STATEMENT(current_statement);
@@ -147,6 +147,7 @@ value exec_function_call(function *function, ast *call) {
     return ERROR_VALUE;
 
   value ret_val = exec_block(function->code_block);
+  fflush(stdout);
 
   leave();
   return ret_val;
@@ -451,6 +452,10 @@ int exec_function_call_statement() {
     return 1;
   }
   value result = exec_function_call(fn, current_statement);
+  if (result.type == ERROR) {
+    printf("error: function call failed\n");
+    return 1;
+  }
   return 0;
 }
 
@@ -459,6 +464,7 @@ int exec_lable() { return insert_lable(current_statement); }
 int execute_program() {
   while (1) {
     EXEC_STATEMENT(current_statement);
+    fflush(stdout);
 
     current_statement = current_statement->next_statement;
 
