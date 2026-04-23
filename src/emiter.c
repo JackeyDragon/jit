@@ -119,8 +119,8 @@ value exec_function_call(function *function, ast *call) {
       int status = 0;
       int i = 0;
       for (param_ast = call->data.FUNCTION_CALL.params; param_ast; param_ast = param_ast->data.PARAMETER.next_param) {
-        value tmp = eval_expression(param_ast->data.PARAMETER.expression, &status);
-        params[i++] = valuedup(&tmp);
+value tmp = eval_expression(param_ast->data.PARAMETER.expression, &status);
+    params[i++] = valuedup(&tmp);
         if (status) {
           free(params);
           return ERROR_VALUE;
