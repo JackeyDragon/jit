@@ -4,6 +4,7 @@
 typedef struct parameter {
   char *name;
   build_in_types type;
+  bool array;
 } parameter;
 
 typedef value (*builtin_fn)(value **args, int arg_count);

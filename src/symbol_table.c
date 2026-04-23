@@ -182,10 +182,15 @@ int insert_function(ast *func_ast) {
 
   ast *param_ast = func_ast->data.FUNCTION_DECLARATION.parameter;
   for (int i = 0; i < func->parameter_count; i++) {
+    ast *param_type = param_ast->data.PARAMETER_DECLARATION.type;
     func->parameter[i].name =
         param_ast->data.PARAMETER_DECLARATION.name->data.IDENTIFYER.name;
-    func->parameter[i].type =
-        param_ast->data.PARAMETER_DECLARATION.type->data.TYPE.type;
+    func->parameter[i].array = (param_type->data.TYPE.type == ARRAY);
+    if (param_type->data.TYPE.type == ARRAY && param_type->data.TYPE.rhs) {
+      func->parameter[i].type = param_type->data.TYPE.rhs->data.TYPE.type;
+    } else {
+      func->parameter[i].type = param_type->data.TYPE.type;
+    }
     param_ast = param_ast->data.PARAMETER_DECLARATION.next_param;
   }
 
