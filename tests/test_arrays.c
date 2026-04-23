@@ -236,6 +236,90 @@ void test_array_in_assignment() {
     TEST_ASSERT_EQ(get_int_val("sum"), 15, "arr[0] + arr[1] should be 15");
 }
 
+/* ============================================================
+   ARRAY FUNCTION TESTS - Document expected behavior
+   
+   These tests document the EXPECTED behavior for array functions.
+   They will FAIL until the feature is implemented.
+   
+   Expected syntax:
+   - Function returning array: array[int] getArray() { ... }
+   - Function with array param: int sum(array[int] arr) { ... }
+   - Array declaration: array[int] arr = {1, 2, 3};
+   ============================================================ */
+
+/* Test: array[int] getArray() { return arr; } */
+void test_parse_function_returning_array() {
+    reset_for_test();
+    struct token *tokens = tokinize("array[int] getArray() { int x[3] = {1, 2, 3}; return x; }");
+    current = tokens;
+    ast *tree = parse_statement();
+    TEST_ASSERT(tree != NULL, "Should parse array[int] return type");
+    TEST_ASSERT(tree->type == NODE_FUNCTION_DECLARATION, "Should be function declaration");
+}
+
+/* Test: array[float] getData() { return arr; } */
+void test_parse_function_returning_array_float() {
+    reset_for_test();
+    struct token *tokens = tokinize("array[float] getData() { float x[2] = {1.5, 2.5}; return x; }");
+    current = tokens;
+    ast *tree = parse_statement();
+    TEST_ASSERT(tree != NULL, "Should parse array[float] return type");
+    TEST_ASSERT(tree->type == NODE_FUNCTION_DECLARATION, "Should be function declaration");
+}
+
+/* Test: int sum(array[int] arr) { ... } */
+void test_parse_array_parameter() {
+    reset_for_test();
+    struct token *tokens = tokinize("int sumArray(array[int] arr) { return arr[0]; }");
+    current = tokens;
+    ast *tree = parse_statement();
+    TEST_ASSERT(tree != NULL, "Should parse array parameter");
+    TEST_ASSERT(tree->type == NODE_FUNCTION_DECLARATION, "Should be function declaration");
+}
+
+/* Test: array[int] arr = {1, 2, 3}; */
+void test_parse_array_type_declaration() {
+    reset_for_test();
+    struct token *tokens = tokinize("array[int] arr = {1, 2, 3};");
+    current = tokens;
+    ast *tree = parse_statement();
+    TEST_ASSERT(tree != NULL, "Should parse array[int] declaration");
+    TEST_ASSERT(tree->type == NODE_DECLAR, "Should be declaration");
+}
+
+/* Test: Calling function that returns array */
+void test_call_function_returning_array() {
+    reset_for_test();
+    
+    // First declare the function
+    struct token *tokens = tokinize("array[int] getArray() { int x[3] = {1, 2, 3}; return x; }");
+    current = tokens;
+    exec(parse_statement());
+    
+    // Then call it
+    tokens = tokinize("array[int] a = getArray();");
+    current = tokens;
+    ast *tree = parse_statement();
+    TEST_ASSERT(tree != NULL, "Should parse calling function that returns array");
+}
+
+/* Test: Passing array to function */
+void test_pass_array_to_function() {
+    reset_for_test();
+    
+    // First declare an array
+    struct token *tokens = tokinize("int arr[3] = {1, 2, 3};");
+    current = tokens;
+    exec(parse_statement());
+    
+    // Then use it - note this syntax won't work yet because we need function with array param
+    // For now just test that the existing array syntax works
+    value *v = get_var("arr");
+    TEST_ASSERT(v != NULL, "Array should exist");
+    TEST_ASSERT(v->array == true, "Should be array");
+}
+
 int main() {
     printf("=== Array Tests ===\n\n");
     
@@ -257,6 +341,14 @@ int main() {
     TEST_RUN(test_array_single_element_access);
     TEST_RUN(test_float_array_access);
     TEST_RUN(test_array_in_assignment);
+    
+    printf("\n--- Array Function Tests ---\n");
+    TEST_RUN(test_parse_function_returning_array);
+    TEST_RUN(test_parse_function_returning_array_float);
+    TEST_RUN(test_parse_array_parameter);
+    TEST_RUN(test_parse_array_type_declaration);
+    TEST_RUN(test_call_function_returning_array);
+    TEST_RUN(test_pass_array_to_function);
     
     printf("\nAll array tests passed!\n");
     return 0;

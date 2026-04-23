@@ -14,9 +14,17 @@ value builtin_print(value **args, int arg_count) {
       printf("%d", v->value.i);
     } else if (v->type == FLOAT) {
       printf("%f", v->value.f);
-    } else if (v->array) {
-      printf("[array of %s, size %d]", v->type == FLOAT ? "float" : "int",
-             v->size);
+} else if (v->array) {
+      printf("[");
+      value *elements = (value *)v->value.data;
+      for (int j = 0; j < v->size; j++) {
+        if (j > 0) printf(", ");
+        if (v->type == INT)
+          printf("%d", elements[j].value.i);
+        else if (v->type == FLOAT)
+          printf("%f", elements[j].value.f);
+      }
+      printf("]");
     }
   }
   printf("\n");

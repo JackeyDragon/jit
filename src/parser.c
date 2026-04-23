@@ -252,9 +252,11 @@ ast *parse_type() {
     if (current && current->next->type != SQUARE_BRACKET_OPEN)
       return NULL;
     type->data.TYPE.type = ARRAY;
+    current = current->next->next;
     type->data.TYPE.rhs = parse_type();
     if (current && current->type != SQUARE_BRACKET_CLOSE)
       return NULL;
+    current = current->next;
     break;
   default:
     free(type);

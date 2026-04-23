@@ -388,6 +388,18 @@ int declare() {
 
   if (current_statement->data.DECLARE.array) {
     int array_count = current_statement->data.DECLARE.array_count;
+    
+    // Handle array from expression (e.g., int x[] = foo(); where foo returns array)
+    if (array_count == 0 && current_statement->data.DECLARE.expression) {
+      value tmp = eval_expression(current_statement->data.DECLARE.expression, &status);
+      if (status != 0) return status;
+      
+      // Use the returned array value directly
+      value *val = valuedup(&tmp);
+      insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name, val);
+      return 0;
+    }
+    
     if (array_count == 0) {
       printf("error: array must have at least one element\n");
       return 1;
