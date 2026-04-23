@@ -201,6 +201,7 @@ ast *parse_statement() {
           stmt = NULL;
           break;
         }
+        current = current->next;
       } else if (peek && peek->type == COLON) {
         stmt = parse_lable();
       } else {
