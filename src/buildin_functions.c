@@ -6,6 +6,8 @@
 #include <stdlib.h>
 
 const char *saves[] = {"/tmp/data.bin"};
+const char *image_files[] = {"/tmp/train-images.bin", "/tmp/t10k-images.bin"};
+const char *label_files[] = {"/tmp/train-labels.bin", "/tmp/t10k-labels.bin"};
 
 value builtin_print(value **args, int arg_count) {
   for (int i = 0; i < arg_count; i++) {
@@ -163,6 +165,144 @@ value build_in_save_array_float(value **args, int arg_count) {
   return VOID_VALUE;
 }
 
+value build_in_load_images(value **args, int arg_count) {
+  if (arg_count != 1 || args[0]->type != INT)
+    return ERROR_VALUE;
+
+  int index = args[0]->value.i;
+  int files_count = sizeof(image_files) / sizeof(image_files[0]);
+
+  if (index < 0 || index >= files_count)
+    return ERROR_VALUE;
+
+  FILE *f = fopen(image_files[index], "rb");
+  if (!f)
+    return ERROR_VALUE;
+
+  fseek(f, 0, SEEK_END);
+  long file_size = ftell(f);
+  rewind(f);
+
+  if (file_size <= 16) {
+    fclose(f);
+    return ERROR_VALUE;
+  }
+
+  int pixel_count = (int)(file_size - 16);
+
+  unsigned char *pixels = malloc(pixel_count);
+  if (!pixels) {
+    fclose(f);
+    return ERROR_VALUE;
+  }
+
+  unsigned char header[16];
+  if (fread(header, 1, 16, f) != 16) {
+    free(pixels);
+    fclose(f);
+    return ERROR_VALUE;
+  }
+
+  if (fread(pixels, 1, pixel_count, f) != (size_t)pixel_count) {
+    free(pixels);
+    fclose(f);
+    return ERROR_VALUE;
+  }
+  fclose(f);
+
+  value *data = malloc(sizeof(value) * pixel_count);
+  if (!data) {
+    free(pixels);
+    return ERROR_VALUE;
+  }
+
+  for (int i = 0; i < pixel_count; i++) {
+    data[i].type = INT;
+    data[i].array = false;
+    data[i].size = sizeof(int);
+    data[i].value.i = (int)pixels[i];
+  }
+
+  free(pixels);
+
+  value result;
+  result.type = INT;
+  result.array = true;
+  result.size = pixel_count;
+  result.value.data = data;
+
+  return result;
+}
+
+value build_in_load_labels(value **args, int arg_count) {
+  if (arg_count != 1 || args[0]->type != INT)
+    return ERROR_VALUE;
+
+  int index = args[0]->value.i;
+  int files_count = sizeof(label_files) / sizeof(label_files[0]);
+
+  if (index < 0 || index >= files_count)
+    return ERROR_VALUE;
+
+  FILE *f = fopen(label_files[index], "rb");
+  if (!f)
+    return ERROR_VALUE;
+
+  fseek(f, 0, SEEK_END);
+  long file_size = ftell(f);
+  rewind(f);
+
+  if (file_size <= 8) {
+    fclose(f);
+    return ERROR_VALUE;
+  }
+
+  int label_count = (int)(file_size - 8);
+
+  unsigned char *labels = malloc(label_count);
+  if (!labels) {
+    fclose(f);
+    return ERROR_VALUE;
+  }
+
+  unsigned char header[8];
+  if (fread(header, 1, 8, f) != 8) {
+    free(labels);
+    fclose(f);
+    return ERROR_VALUE;
+  }
+
+  if (fread(labels, 1, label_count, f) != (size_t)label_count) {
+    free(labels);
+    fclose(f);
+    return ERROR_VALUE;
+  }
+  fclose(f);
+
+  value *data = malloc(sizeof(value) * label_count);
+  if (!data) {
+    free(labels);
+    return ERROR_VALUE;
+  }
+
+  for (int i = 0; i < label_count; i++) {
+    data[i].type = INT;
+    data[i].array = false;
+    data[i].size = sizeof(int);
+    data[i].value.i = (int)labels[i];
+  }
+
+  free(labels);
+
+  value result;
+  result.type = INT;
+  result.array = true;
+  result.size = label_count;
+  result.value.data = data;
+
+  return result;
+}
+
 void register_functions() {
   static ast void_type = {
       .type = NODE_TYPE, .data.TYPE.type = VOID, .data.TYPE.rhs = NULL};
@@ -214,4 +354,21 @@ void register_functions() {
                                 .c_function = build_in_load_array_float};
 
   insert_function_struct(&load_array);
+
+  static ast array_int_type = {
+      .type = NODE_TYPE, .data.TYPE.type = ARRAY, .data.TYPE.rhs = &int_type};
+
+  static function load_images_func = {.name = "load_images",
+                                      .return_type = &array_int_type,
+                                      .build_in = true,
+                                      .c_function = build_in_load_images};
+
+  insert_function_struct(&load_images_func);
+
+  static function load_labels_func = {.name = "load_labels",
+                                       .return_type = &array_int_type,
+                                       .build_in = true,
+                                       .c_function = build_in_load_labels};
+
+  insert_function_struct(&load_labels_func);
 }
