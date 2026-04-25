@@ -67,6 +67,37 @@ static char *readline(char *prompt) {
   return buf;
 }
 
+static char *preprocess_block(char *line, int *in_block, char *accumulator, size_t *acc_pos) {
+  char *ptr = line;
+  while (*ptr) {
+    if (*ptr == '{') {
+      *in_block = 1;
+      accumulator[(*acc_pos)++] = *ptr++;
+    } else if (*ptr == '}') {
+      *in_block = 0;
+      accumulator[(*acc_pos)++] = *ptr++;
+    } else if (*in_block) {
+      if (*ptr == '\n' || *ptr == '\r') {
+        ptr++;
+      } else if (*ptr == ' ' || *ptr == '\t') {
+        char *tmp = ptr;
+        while (*tmp == ' ' || *tmp == '\t') tmp++;
+        if (*tmp != '\n' && *tmp != '\r' && *tmp != '\0' && *tmp != '}') {
+          accumulator[(*acc_pos)++] = *ptr++;
+        } else {
+          ptr++;
+        }
+      } else {
+        accumulator[(*acc_pos)++] = *ptr++;
+      }
+    } else {
+      accumulator[(*acc_pos)++] = *ptr++;
+    }
+  }
+  accumulator[*acc_pos] = '\0';
+  return accumulator;
+}
+
 int main(int argc, char *argv[]) {
   char *input = NULL;
   init_table();
@@ -83,25 +114,42 @@ int main(int argc, char *argv[]) {
     if (fp == NULL)
       exit(EXIT_FAILURE);
 
+    char accumulator[8192];
+    int in_block = 0;
+    size_t acc_pos = 0;
+    accumulator[0] = '\0';
+
     while ((read = getline(&line, &len, fp)) != -1) {
       if (strlen(line) > 0 && line[strlen(line) - 1] == '\n')
         line[strlen(line) - 1] = '\0';
 
-      if (strcmp(line, "list") == 0) {
+      char *processed = preprocess_block(line, &in_block, accumulator, &acc_pos);
+
+      if (strcmp(processed, "list") == 0) {
         code_print_all();
         line = NULL;
+        acc_pos = 0;
+        accumulator[0] = '\0';
+        in_block = 0;
         continue;
       }
-      struct token *head = tokinize(line);
-      current = head;
 
-      ast *tree = parse_statement();
-      if (!tree) {
-        printf("syntax error\n");
-        line = NULL;
-        continue;
+      if (!in_block) {
+        if (acc_pos > 0) {
+          struct token *head = tokinize(processed);
+          current = head;
+
+          ast *tree = parse_statement();
+          if (!tree) {
+            printf("syntax error\n");
+            line = NULL;
+            continue;
+          }
+          exec(tree);
+          acc_pos = 0;
+          accumulator[0] = '\0';
+        }
       }
-      exec(tree);
     }
     fclose(fp);
     if (line)
