@@ -188,7 +188,13 @@ ast *parse_statement() {
         stmt = parse_declaration_ast();
       }
     } else if (current->type == TYPE_ARRAY) {
-      stmt = parse_function_declaration();
+      struct token *peek = current->next;
+      if (peek && peek->type == IDENTIFYER && peek->next && peek->next->type == BRACKET_OPEN) {
+        // array type followed by identifier and () = function call
+        stmt = parse_expression(0);
+      } else {
+        stmt = parse_function_declaration();
+      }
     }
 
     else if (current->type == IDENTIFYER) {
@@ -205,7 +211,6 @@ ast *parse_statement() {
       } else if (peek && peek->type == COLON) {
         stmt = parse_lable();
       } else {
-        // can this go?
         stmt = parse_expression(0);
       }
     } else if (current->type == KEYWORD_IF) {

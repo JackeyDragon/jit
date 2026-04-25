@@ -91,7 +91,7 @@ void is_keyword(struct token *token) {
 
 int read_identifyer(char *string, struct token *token) {
   int pos = 0;
-  while (isalpha(string[pos])) {
+  while (isalpha(string[pos]) || string[pos] == '_' || isdigit(string[pos])) {
     pos++;
   }
   token->value = malloc(pos + 1);

@@ -123,7 +123,6 @@ int main(int argc, char *argv[]) {
       }
 
       struct token *head = tokinize(input);
-      // print_tokens(head);
       current = head;
       if (strcmp(input, "list") == 0) {
         code_print_all();
@@ -141,7 +140,6 @@ int main(int argc, char *argv[]) {
       printf("==========\n");
       fflush(stdout);
 
-      // todo semantic analysis
       exec(tree);
       fflush(stdout);
       print_table();
