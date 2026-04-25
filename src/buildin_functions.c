@@ -5,9 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const char *saves[] = {"/tmp/data.bin"};
-const char *image_files[] = {"/tmp/train-images.bin", "/tmp/t10k-images.bin"};
-const char *label_files[] = {"/tmp/train-labels.bin", "/tmp/t10k-labels.bin"};
+const char *saves[] = {"../float1.bin", "../float2.bin", "../float3.bin",
+                       "../float4.bin", "../float5.bin", "../float6.bin",
+                       "../float7.bin"};
+
+const char *image_files[] = {"t10k-images.idx3-ubyte",
+                             "train-images.idx3-ubyte"};
+
+const char *label_files[] = {"t10k-labels.idx1-ubyte",
+                             "train-labels.idx1-ubyte"};
 
 value builtin_print(value **args, int arg_count) {
   for (int i = 0; i < arg_count; i++) {
@@ -366,9 +372,9 @@ void register_functions() {
   insert_function_struct(&load_images_func);
 
   static function load_labels_func = {.name = "load_labels",
-                                       .return_type = &array_int_type,
-                                       .build_in = true,
-                                       .c_function = build_in_load_labels};
+                                      .return_type = &array_int_type,
+                                      .build_in = true,
+                                      .c_function = build_in_load_labels};
 
   insert_function_struct(&load_labels_func);
 }

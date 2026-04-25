@@ -97,16 +97,12 @@ int main(int argc, char *argv[]) {
 
       ast *tree = parse_statement();
       if (!tree) {
-        printf("continue\n");
+        printf("syntax error\n");
         line = NULL;
         continue;
       }
-      printf("=== AST ===\n");
-      print_ast(tree, 0);
-      printf("==========\n");
       exec(tree);
     }
-    print_table();
     fclose(fp);
     if (line)
       free(line);
@@ -135,14 +131,10 @@ int main(int argc, char *argv[]) {
         input = NULL;
         continue;
       }
-      printf("=== AST ===\n");
-      print_ast(tree, 0);
-      printf("==========\n");
       fflush(stdout);
 
       exec(tree);
       fflush(stdout);
-      print_table();
       input = NULL;
     }
   }
