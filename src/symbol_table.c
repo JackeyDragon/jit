@@ -172,8 +172,7 @@ int insert_function(ast *func_ast) {
   function *func = malloc(sizeof(function));
   func->name =
       func_ast->data.FUNCTION_DECLARATION.identifyer->data.IDENTIFYER.name;
-  func->return_type =
-      func_ast->data.FUNCTION_DECLARATION.return_type->data.TYPE.type;
+  func->return_type = func_ast->data.FUNCTION_DECLARATION.return_type;
   func->code_block = func_ast->data.FUNCTION_DECLARATION.block;
 
   func->parameter_count =

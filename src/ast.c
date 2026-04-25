@@ -178,7 +178,21 @@ void print_ast(ast *node, int depth) {
     printf("ROOT\n");
     break;
   case NODE_TYPE:
-    printf("TYPE: %s\n", node->data.TYPE.type == INT ? "int" : "float");
+    if (node->data.TYPE.type == ARRAY) {
+      printf("TYPE: array[");
+      if (node->data.TYPE.rhs) {
+        print_ast(node->data.TYPE.rhs, depth);
+      } else {
+        printf("?");
+      }
+      printf("]\n");
+    } else {
+      printf("TYPE: %s\n", node->data.TYPE.type == INT ? "int" : 
+             node->data.TYPE.type == FLOAT ? "float" :
+             node->data.TYPE.type == VOID ? "void" :
+             node->data.TYPE.type == FUNCTION ? "function" :
+             "unknown");
+    }
     break;
   case NODE_IF_CONDITION:
     printf("IF_CONDITION\n");
@@ -228,6 +242,9 @@ void print_ast(ast *node, int depth) {
     }
   }
   if (node->type == NODE_FUNCTION_DECLARATION) {
+    if (node->data.FUNCTION_DECLARATION.return_type) {
+      print_ast(node->data.FUNCTION_DECLARATION.return_type, depth + 1);
+    }
     if (node->data.FUNCTION_DECLARATION.parameter) {
       print_ast(node->data.FUNCTION_DECLARATION.parameter, depth + 1);
     }

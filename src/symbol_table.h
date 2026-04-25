@@ -11,7 +11,7 @@ typedef value (*builtin_fn)(value **args, int arg_count);
 
 typedef struct function {
   char *name;
-  build_in_types return_type;
+  ast *return_type;
   ast *code_block;
   parameter *parameter;
   int parameter_count;

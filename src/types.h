@@ -4,7 +4,11 @@
 #include <stdbool.h>
 
 #define ERROR_VALUE (value){.type = ERROR, .size = -1, .value.i = -1}
-#define VOID_VALUE (value){.type = VOID, .size = 0, .array = false, .value.i = 0}
+#define VOID_VALUE                                                             \
+  (value){.type = VOID, .size = 0, .array = false, .value.i = 0}
+#define TRUE_VALUE (value){.type = INT, .size = sizeof(int), .value.i = 1}
+#define FALSE_VALUE (value){.type = INT, .size = sizeof(int), .value.i = 0}
+
 typedef enum build_in_types {
   INT,
   FLOAT,
@@ -13,6 +17,7 @@ typedef enum build_in_types {
   VOID,
   ERROR
 } build_in_types;
+
 typedef struct value {
   build_in_types type;
   bool array;
