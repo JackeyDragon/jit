@@ -160,27 +160,18 @@ value build_in_save_array_float(value **args, int arg_count) {
   if (written != (size_t)array->size)
     return ERROR_VALUE;
 
-  return TRUE_VALUE;
+  return VOID_VALUE;
 }
 
 void register_functions() {
   static ast void_type = {
-    .type = NODE_TYPE,
-    .data.TYPE.type = VOID,
-    .data.TYPE.rhs = NULL
-  };
+      .type = NODE_TYPE, .data.TYPE.type = VOID, .data.TYPE.rhs = NULL};
 
   static ast int_type = {
-    .type = NODE_TYPE,
-    .data.TYPE.type = INT,
-    .data.TYPE.rhs = NULL
-  };
+      .type = NODE_TYPE, .data.TYPE.type = INT, .data.TYPE.rhs = NULL};
 
   static ast float_type = {
-    .type = NODE_TYPE,
-    .data.TYPE.type = FLOAT,
-    .data.TYPE.rhs = NULL
-  };
+      .type = NODE_TYPE, .data.TYPE.type = FLOAT, .data.TYPE.rhs = NULL};
 
   static function print_func = {.name = "print",
                                 .return_type = &void_type,
@@ -215,10 +206,7 @@ void register_functions() {
   insert_function_struct(&save_array);
 
   static ast array_float_type = {
-    .type = NODE_TYPE,
-    .data.TYPE.type = ARRAY,
-    .data.TYPE.rhs = &float_type
-  };
+      .type = NODE_TYPE, .data.TYPE.type = ARRAY, .data.TYPE.rhs = &float_type};
 
   static function load_array = {.name = "load_array",
                                 .return_type = &array_float_type,
