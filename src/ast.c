@@ -32,6 +32,10 @@ ast_type token_type_to_ast_type(enum token_type type) {
   case OR:
   case EQUAL:
   case NOT_EQUAL:
+  case GREATER_THAN:
+  case LESS_THAN:
+  case GREATER_EQUAL:
+  case LESS_EQUAL:
     return NODE_OPERATION;
   case TOKEN_ASSIGN:
     return NODE_EQUALS_SIGN;
@@ -123,6 +127,10 @@ binding_power get_binding_power(enum token_type type) {
   switch (type) {
   case EQUAL:
   case NOT_EQUAL:
+  case GREATER_THAN:
+  case LESS_THAN:
+  case GREATER_EQUAL:
+  case LESS_EQUAL:
     return (binding_power){.left = 1, .right = 0.9};
   case AND:
   case OR:

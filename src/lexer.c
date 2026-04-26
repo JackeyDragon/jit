@@ -103,8 +103,16 @@ int read_identifyer(char *string, struct token *token) {
 char *is_operator(char *string, struct token *token, int *pos) {
   if (strncmp(string, "==", 2) == 0)
     token->type = EQUAL;
-  else if (strncmp(string, "!=", 1) == 0)
+  else if (strncmp(string, "!=", 2) == 0)
     token->type = NOT_EQUAL;
+  else if (strncmp(string, ">=", 2) == 0)
+    token->type = GREATER_EQUAL;
+  else if (strncmp(string, "<=", 2) == 0)
+    token->type = LESS_EQUAL;
+  else if (strncmp(string, ">", 1) == 0)
+    token->type = GREATER_THAN;
+  else if (strncmp(string, "<", 1) == 0)
+    token->type = LESS_THAN;
   else if (strncmp(string, "||", 1) == 0)
     token->type = OR;
   else if (strncmp(string, "&&", 1) == 0)
@@ -130,6 +138,18 @@ char *is_operator(char *string, struct token *token, int *pos) {
     break;
   case NOT_EQUAL:
     token->value = strdup("!=");
+    break;
+  case GREATER_THAN:
+    token->value = strdup(">");
+    break;
+  case LESS_THAN:
+    token->value = strdup("<");
+    break;
+  case GREATER_EQUAL:
+    token->value = strdup(">=");
+    break;
+  case LESS_EQUAL:
+    token->value = strdup("<=");
     break;
   case OR:
     token->value = strdup("||");

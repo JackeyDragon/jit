@@ -332,6 +332,54 @@ value eval_expression(ast *expresion, int *status) {
                    .size = sizeof(int),
                    .value.i = lhs.value.i != rhs.value.i};
   }
+  if (expr->data.EXPRESSION.operaton == GREATER_THAN) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    if (lhs.type == FLOAT || rhs.type == FLOAT) {
+      float l = lhs.type == FLOAT ? lhs.value.f : (float)lhs.value.i;
+      float r = rhs.type == FLOAT ? rhs.value.f : (float)rhs.value.i;
+      return (value){.type = INT, .size = sizeof(int), .value.i = l > r};
+    }
+    return (value){.type = INT,
+                   .size = sizeof(int),
+                   .value.i = lhs.value.i > rhs.value.i};
+  }
+  if (expr->data.EXPRESSION.operaton == LESS_THAN) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    if (lhs.type == FLOAT || rhs.type == FLOAT) {
+      float l = lhs.type == FLOAT ? lhs.value.f : (float)lhs.value.i;
+      float r = rhs.type == FLOAT ? rhs.value.f : (float)rhs.value.i;
+      return (value){.type = INT, .size = sizeof(int), .value.i = l < r};
+    }
+    return (value){.type = INT,
+                   .size = sizeof(int),
+                   .value.i = lhs.value.i < rhs.value.i};
+  }
+  if (expr->data.EXPRESSION.operaton == GREATER_EQUAL) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    if (lhs.type == FLOAT || rhs.type == FLOAT) {
+      float l = lhs.type == FLOAT ? lhs.value.f : (float)lhs.value.i;
+      float r = rhs.type == FLOAT ? rhs.value.f : (float)rhs.value.i;
+      return (value){.type = INT, .size = sizeof(int), .value.i = l >= r};
+    }
+    return (value){.type = INT,
+                   .size = sizeof(int),
+                   .value.i = lhs.value.i >= rhs.value.i};
+  }
+  if (expr->data.EXPRESSION.operaton == LESS_EQUAL) {
+    value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
+    value rhs = eval_expression(expr->data.EXPRESSION.rhs, status);
+    if (lhs.type == FLOAT || rhs.type == FLOAT) {
+      float l = lhs.type == FLOAT ? lhs.value.f : (float)lhs.value.i;
+      float r = rhs.type == FLOAT ? rhs.value.f : (float)rhs.value.i;
+      return (value){.type = INT, .size = sizeof(int), .value.i = l <= r};
+    }
+    return (value){.type = INT,
+                   .size = sizeof(int),
+                   .value.i = lhs.value.i <= rhs.value.i};
+  }
   (*status) = 1;
   return ERROR_VALUE;
 }

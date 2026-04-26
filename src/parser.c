@@ -124,6 +124,10 @@ ast *parse_expression(int min_bp) {
     case AND:
     case EQUAL:
     case NOT_EQUAL:
+    case GREATER_THAN:
+    case LESS_THAN:
+    case GREATER_EQUAL:
+    case LESS_EQUAL:
     case OR:
       op = current->type;
       break;
