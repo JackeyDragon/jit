@@ -199,7 +199,9 @@ ast *parse_statement() {
 
     else if (current->type == IDENTIFYER) {
       struct token *peek = current->next;
-      if (peek && peek->type == TOKEN_ASSIGN) {
+      if (peek && peek->type == SQUARE_BRACKET_OPEN) {
+        stmt = parse_assignment_ast();
+      } else if (peek && peek->type == TOKEN_ASSIGN) {
         stmt = parse_assignment_ast();
       } else if (peek && peek->type == BRACKET_OPEN) {
         stmt = parse_function_call();
@@ -406,10 +408,10 @@ ast *parse_assignment_ast() {
   if (!current || !name)
     return NULL;
 
-  ast *array_access = NULL;
+  ast *array_index = NULL;
   if (current && current->type == SQUARE_BRACKET_OPEN) {
     current = current->next;
-    array_access = parse_expression(0);
+    array_index = parse_expression(0);
     if (!current || current->type != SQUARE_BRACKET_CLOSE) {
       return NULL;
     }
@@ -423,9 +425,13 @@ ast *parse_assignment_ast() {
   ast *assign = malloc(sizeof(ast));
   assign->type = NODE_ASSIGN;
   
-  if (array_access) {
-    assign->data.ASSIGN.identifyer = array_access;
-    assign->data.ASSIGN.identifyer->data.ARRAY_ACCESS.identifyer = name;
+  if (array_index) {
+    // Create a proper ARRAY_ACCESS node
+    ast *arr_access = malloc(sizeof(ast));
+    arr_access->type = NODE_ARRAY_ACCESS;
+    arr_access->data.ARRAY_ACCESS.identifyer = name;
+    arr_access->data.ARRAY_ACCESS.index = array_index;
+    assign->data.ASSIGN.identifyer = arr_access;
   } else {
     assign->data.ASSIGN.identifyer = name;
   }

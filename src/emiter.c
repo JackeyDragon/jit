@@ -343,6 +343,40 @@ int exec_assign() {
   if (status != 0) {
     return status;
   }
+
+  // Check if this is an array assignment (arr[i] = value)
+  if (current_statement->data.ASSIGN.identifyer->type == NODE_ARRAY_ACCESS) {
+    ast *arr_access = current_statement->data.ASSIGN.identifyer;
+    char *name = arr_access->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name;
+    value *arr = lookup(name);
+    if (!arr) {
+      printf("error: undeclared variable '%s'\n", name);
+      return 1;
+    }
+    if (!arr->array) {
+      printf("error: '%s' is not an array\n", name);
+      return 1;
+    }
+    value index_val = eval_expression(arr_access->data.ARRAY_ACCESS.index, &status);
+    if (status != 0) {
+      return 1;
+    }
+    if (index_val.type != INT) {
+      printf("error: array index must be int\n");
+      return 1;
+    }
+    if (index_val.value.i < 0 || index_val.value.i >= arr->size) {
+      printf("error: array index out of bounds\n");
+      return 1;
+    }
+    if (arr->value.data) {
+      value *elements = (value *)arr->value.data;
+      elements[index_val.value.i] = tmp;
+    }
+    return 0;
+  }
+
+  // Regular assignment
   char *name = current_statement->data.ASSIGN.identifyer->data.IDENTIFYER.name;
   value *existing = lookup(name);
   if (!existing) {
