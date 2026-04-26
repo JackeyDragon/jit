@@ -6,7 +6,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/jit",
-            "args": [],
+            "args": ["/home/jack/Projects/jit/test_multiline.j"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -406,13 +406,30 @@ ast *parse_assignment_ast() {
   if (!current || !name)
     return NULL;
 
+  ast *array_access = NULL;
+  if (current && current->type == SQUARE_BRACKET_OPEN) {
+    current = current->next;
+    array_access = parse_expression(0);
+    if (!current || current->type != SQUARE_BRACKET_CLOSE) {
+      return NULL;
+    }
+    current = current->next;
+  }
+
   if (!current || current->type != TOKEN_ASSIGN)
     return NULL;
   current = current->next;
 
   ast *assign = malloc(sizeof(ast));
   assign->type = NODE_ASSIGN;
-  assign->data.ASSIGN.identifyer = name;
+  
+  if (array_access) {
+    assign->data.ASSIGN.identifyer = array_access;
+    assign->data.ASSIGN.identifyer->data.ARRAY_ACCESS.identifyer = name;
+  } else {
+    assign->data.ASSIGN.identifyer = name;
+  }
+  
   assign->data.ASSIGN.expression = parse_expression(0);
   assign->next_statement = NULL;
 

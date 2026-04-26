@@ -13,6 +13,7 @@
 
 extern struct token *current;
 extern ast *parse_expression(int min_bp);
+extern const char *get_parse_error(void);
 extern ast *parse_statement();
 extern int exec(ast *statement);
 
@@ -67,21 +68,23 @@ static char *readline(char *prompt) {
   return buf;
 }
 
-static char *preprocess_block(char *line, int *in_block, char *accumulator, size_t *acc_pos) {
+static char *preprocess_block(char *line, int *brace_count, char *accumulator,
+                               size_t *acc_pos) {
   char *ptr = line;
   while (*ptr) {
     if (*ptr == '{') {
-      *in_block = 1;
+      (*brace_count)++;
       accumulator[(*acc_pos)++] = *ptr++;
     } else if (*ptr == '}') {
-      *in_block = 0;
+      (*brace_count)--;
       accumulator[(*acc_pos)++] = *ptr++;
-    } else if (*in_block) {
+    } else if (*brace_count > 0) {
       if (*ptr == '\n' || *ptr == '\r') {
         ptr++;
       } else if (*ptr == ' ' || *ptr == '\t') {
         char *tmp = ptr;
-        while (*tmp == ' ' || *tmp == '\t') tmp++;
+        while (*tmp == ' ' || *tmp == '\t')
+          tmp++;
         if (*tmp != '\n' && *tmp != '\r' && *tmp != '\0' && *tmp != '}') {
           accumulator[(*acc_pos)++] = *ptr++;
         } else {
@@ -115,7 +118,7 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
 
     char accumulator[8192];
-    int in_block = 0;
+    int brace_count = 0;
     size_t acc_pos = 0;
     accumulator[0] = '\0';
 
@@ -123,25 +126,27 @@ int main(int argc, char *argv[]) {
       if (strlen(line) > 0 && line[strlen(line) - 1] == '\n')
         line[strlen(line) - 1] = '\0';
 
-      char *processed = preprocess_block(line, &in_block, accumulator, &acc_pos);
-
+      char *processed =
+          preprocess_block(line, &brace_count, accumulator, &acc_pos);
       if (strcmp(processed, "list") == 0) {
         code_print_all();
         line = NULL;
         acc_pos = 0;
         accumulator[0] = '\0';
-        in_block = 0;
+        brace_count = 0;
         continue;
       }
 
-      if (!in_block) {
+      if (brace_count == 0) {
         if (acc_pos > 0) {
           struct token *head = tokinize(processed);
           current = head;
 
-          ast *tree = parse_statement();
+ast *tree = parse_statement();
           if (!tree) {
             printf("syntax error\n");
+            acc_pos = 0;
+            accumulator[0] = '\0';
             line = NULL;
             continue;
           }
