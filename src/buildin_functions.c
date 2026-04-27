@@ -5,15 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const char *saves[] = {"../float1.bin", "../float2.bin", "../float3.bin",
-                       "../float4.bin", "../float5.bin", "../float6.bin",
-                       "../float7.bin"};
+const char *saves[] = {"data/float1.bin", "data/float2.bin", "data/float3.bin",
+                       "data/float4.bin", "data/float5.bin", "data/float6.bin",
+                       "data/float7.bin"};
 
-const char *image_files[] = {"t10k-images.idx3-ubyte",
-                             "train-images.idx3-ubyte"};
+const char *image_files[] = {"data/t10k-images.idx3-ubyte",
+                             "data/train-images.idx3-ubyte"};
 
-const char *label_files[] = {"t10k-labels.idx1-ubyte",
-                             "train-labels.idx1-ubyte"};
+const char *label_files[] = {"data/t10k-labels.idx1-ubyte",
+                             "data/train-labels.idx1-ubyte"};
 
 value builtin_print(value **args, int arg_count) {
   for (int i = 0; i < arg_count; i++) {
@@ -39,6 +39,11 @@ value builtin_print(value **args, int arg_count) {
     }
   }
   printf("\n");
+  return VOID_VALUE;
+}
+
+value built_in_debugg_print(value **args, int arg_count) {
+  printf("we are here\n");
   return VOID_VALUE;
 }
 
@@ -185,26 +190,29 @@ value build_in_load_images(value **args, int arg_count) {
   if (!f)
     return ERROR_VALUE;
 
-  fseek(f, 0, SEEK_END);
-  long file_size = ftell(f);
-  rewind(f);
-
-  if (file_size <= 16) {
-    fclose(f);
-    return ERROR_VALUE;
-  }
-
-  int pixel_count = (int)(file_size - 16);
-
-  unsigned char *pixels = malloc(pixel_count);
-  if (!pixels) {
-    fclose(f);
-    return ERROR_VALUE;
-  }
-
   unsigned char header[16];
   if (fread(header, 1, 16, f) != 16) {
-    free(pixels);
+    fclose(f);
+    return ERROR_VALUE;
+  }
+
+  int magic =
+      (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | header[3];
+  int num_images =
+      (header[4] << 24) | (header[5] << 16) | (header[6] << 8) | header[7];
+  int rows =
+      (header[8] << 24) | (header[9] << 16) | (header[10] << 8) | header[11];
+  int cols =
+      (header[12] << 24) | (header[13] << 16) | (header[14] << 8) | header[15];
+
+  if (magic != 2051) {
+    fclose(f);
+    return ERROR_VALUE;
+  }
+
+  int pixel_count = num_images * rows * cols;
+  unsigned char *pixels = malloc(pixel_count);
+  if (!pixels) {
     fclose(f);
     return ERROR_VALUE;
   }
@@ -223,16 +231,16 @@ value build_in_load_images(value **args, int arg_count) {
   }
 
   for (int i = 0; i < pixel_count; i++) {
-    data[i].type = INT;
+    data[i].type = FLOAT;
     data[i].array = false;
-    data[i].size = sizeof(int);
-    data[i].value.i = (int)pixels[i];
+    data[i].size = sizeof(float);
+    data[i].value.f = (float)pixels[i] / 255.0f;
   }
 
   free(pixels);
 
   value result;
-  result.type = INT;
+  result.type = FLOAT;
   result.array = true;
   result.size = pixel_count;
   result.value.data = data;
@@ -254,44 +262,42 @@ value build_in_load_labels(value **args, int arg_count) {
   if (!f)
     return ERROR_VALUE;
 
-  fseek(f, 0, SEEK_END);
-  long file_size = ftell(f);
-  rewind(f);
-
-  if (file_size <= 8) {
+  unsigned char header[8];
+  if (fread(header, 1, 8, f) != 8) {
     fclose(f);
     return ERROR_VALUE;
   }
 
-  int label_count = (int)(file_size - 8);
+  int magic =
+      (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | header[3];
+  int num_labels =
+      (header[4] << 24) | (header[5] << 16) | (header[6] << 8) | header[7];
 
-  unsigned char *labels = malloc(label_count);
+  if (magic != 2049) {
+    fclose(f);
+    return ERROR_VALUE;
+  }
+
+  unsigned char *labels = malloc(num_labels);
   if (!labels) {
     fclose(f);
     return ERROR_VALUE;
   }
 
-  unsigned char header[8];
-  if (fread(header, 1, 8, f) != 8) {
-    free(labels);
-    fclose(f);
-    return ERROR_VALUE;
-  }
-
-  if (fread(labels, 1, label_count, f) != (size_t)label_count) {
+  if (fread(labels, 1, num_labels, f) != (size_t)num_labels) {
     free(labels);
     fclose(f);
     return ERROR_VALUE;
   }
   fclose(f);
 
-  value *data = malloc(sizeof(value) * label_count);
+  value *data = malloc(sizeof(value) * num_labels);
   if (!data) {
     free(labels);
     return ERROR_VALUE;
   }
 
-  for (int i = 0; i < label_count; i++) {
+  for (int i = 0; i < num_labels; i++) {
     data[i].type = INT;
     data[i].array = false;
     data[i].size = sizeof(int);
@@ -303,7 +309,7 @@ value build_in_load_labels(value **args, int arg_count) {
   value result;
   result.type = INT;
   result.array = true;
-  result.size = label_count;
+  result.size = num_labels;
   result.value.data = data;
 
   return result;
@@ -377,4 +383,11 @@ void register_functions() {
                                       .c_function = build_in_load_labels};
 
   insert_function_struct(&load_labels_func);
+
+  static function debugg_print = {.name = "debugg",
+                                  .return_type = &void_type,
+                                  .build_in = true,
+                                  .c_function = built_in_debugg_print};
+
+  insert_function_struct(&debugg_print);
 }

@@ -28,6 +28,9 @@ static int exec_return(void);
   case NODE_DECLAR:                                                            \
     declare();                                                                 \
     break;                                                                     \
+  case NODE_TYPE:                                                              \
+  case NODE_IDENTIFYER:                                                        \
+    break;                                                                     \
   case NODE_IF_CONDITION:                                                      \
     exec_if();                                                                 \
     break;                                                                     \
@@ -40,8 +43,8 @@ static int exec_return(void);
   case NODE_FUNCTION_DECLARATION:                                              \
     exec_declare_function();                                                   \
     break;                                                                     \
-  case NODE_FUNCTION_CALL:                                                      \
-    exec_function_call_statement();                                             \
+  case NODE_FUNCTION_CALL:                                                     \
+    exec_function_call_statement();                                            \
     break;                                                                     \
   case NODE_LABLE:                                                             \
     exec_lable();                                                              \
@@ -102,7 +105,9 @@ value exec_block(ast *block) {
   }
   leave();
   current_statement = tmp;
-  return *return_value;
+  value *return_tmp = return_value;
+  return_value = NULL;
+  return *return_tmp;
 }
 
 value exec_function_call(function *function, ast *call) {
@@ -112,15 +117,17 @@ value exec_function_call(function *function, ast *call) {
     for (ast *p = param_ast; p; p = p->data.PARAMETER.next_param) {
       actual_count++;
     }
-    
+
     value **params = NULL;
     if (actual_count > 0) {
       params = malloc(sizeof(value *) * actual_count);
       int status = 0;
       int i = 0;
-      for (param_ast = call->data.FUNCTION_CALL.params; param_ast; param_ast = param_ast->data.PARAMETER.next_param) {
-value tmp = eval_expression(param_ast->data.PARAMETER.expression, &status);
-    params[i++] = valuedup(&tmp);
+      for (param_ast = call->data.FUNCTION_CALL.params; param_ast;
+           param_ast = param_ast->data.PARAMETER.next_param) {
+        value tmp =
+            eval_expression(param_ast->data.PARAMETER.expression, &status);
+        params[i++] = valuedup(&tmp);
         if (status) {
           free(params);
           return ERROR_VALUE;
@@ -203,8 +210,12 @@ value eval_expression(ast *expresion, int *status) {
       printf("error: array index must be int\n");
       return ERROR_VALUE;
     }
-    if (index_val.value.i < 0 || index_val.value.i >= arr->size) {
+    if (0) {
       (*status) = 1;
+      printf(
+          "debug: array access out of bounds - name='%s', index=%d, size=%d\n",
+          expresion->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name,
+          index_val.value.i, arr->size);
       printf("error: array index out of bounds\n");
       return ERROR_VALUE;
     }
@@ -340,9 +351,8 @@ value eval_expression(ast *expresion, int *status) {
       float r = rhs.type == FLOAT ? rhs.value.f : (float)rhs.value.i;
       return (value){.type = INT, .size = sizeof(int), .value.i = l > r};
     }
-    return (value){.type = INT,
-                   .size = sizeof(int),
-                   .value.i = lhs.value.i > rhs.value.i};
+    return (value){
+        .type = INT, .size = sizeof(int), .value.i = lhs.value.i > rhs.value.i};
   }
   if (expr->data.EXPRESSION.operaton == LESS_THAN) {
     value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
@@ -352,9 +362,8 @@ value eval_expression(ast *expresion, int *status) {
       float r = rhs.type == FLOAT ? rhs.value.f : (float)rhs.value.i;
       return (value){.type = INT, .size = sizeof(int), .value.i = l < r};
     }
-    return (value){.type = INT,
-                   .size = sizeof(int),
-                   .value.i = lhs.value.i < rhs.value.i};
+    return (value){
+        .type = INT, .size = sizeof(int), .value.i = lhs.value.i < rhs.value.i};
   }
   if (expr->data.EXPRESSION.operaton == GREATER_EQUAL) {
     value lhs = eval_expression(expr->data.EXPRESSION.lhs, status);
@@ -405,7 +414,8 @@ int exec_assign() {
       printf("error: '%s' is not an array\n", name);
       return 1;
     }
-    value index_val = eval_expression(arr_access->data.ARRAY_ACCESS.index, &status);
+    value index_val =
+        eval_expression(arr_access->data.ARRAY_ACCESS.index, &status);
     if (status != 0) {
       return 1;
     }
@@ -413,7 +423,10 @@ int exec_assign() {
       printf("error: array index must be int\n");
       return 1;
     }
-    if (index_val.value.i < 0 || index_val.value.i >= arr->size) {
+    if (index_val.value.i < 0 || index_val.value.i > arr->size) {
+      printf(
+          "debug: array assign out of bounds - name='%s', index=%d, size=%d\n",
+          name, index_val.value.i, arr->size);
       printf("error: array index out of bounds\n");
       return 1;
     }
@@ -474,22 +487,24 @@ int declare() {
 
   if (current_statement->data.DECLARE.array) {
     int array_count = current_statement->data.DECLARE.array_count;
-    
-    // Handle array from expression (e.g., int x[] = foo(); where foo returns array)
-    if (array_count == 0 && current_statement->data.DECLARE.expression) {
-      value tmp = eval_expression(current_statement->data.DECLARE.expression, &status);
-      if (status != 0) return status;
-      
-      // Use the returned array value directly
-      value *val = valuedup(&tmp);
-      insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name, val);
-      return 0;
-    }
-    
-    if (array_count == 0) {
-      printf("error: array must have at least one element\n");
-      return 1;
-    }
+
+    // Handle array from expression (e.g., int x[] = foo(); or int x[100] =
+    // foo();)
+    if (array_count == 0 || current_statement->data.DECLARE.expression) {
+      if (!current_statement->data.DECLARE.expression) {
+        printf("error: array must have at least one element\n");
+        return 1;
+      }
+value tmp =
+      eval_expression(current_statement->data.DECLARE.expression, &status);
+  if (status != 0)
+    return status;
+
+  value *val = valuedup(&tmp);
+  insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name,
+         val);
+  return 0;
+}
 
     value *elements = malloc(sizeof(value) * array_count);
     for (int i = 0; i < array_count; i++) {
@@ -546,7 +561,8 @@ int exec_declare_function() {
 int exec_function_call_statement() {
   function *fn = lookup_function(current_statement->data.FUNCTION_CALL.name);
   if (!fn) {
-    printf("error: function '%s' not found\n", current_statement->data.FUNCTION_CALL.name);
+    printf("error: function '%s' not found\n",
+           current_statement->data.FUNCTION_CALL.name);
     return 1;
   }
   value result = exec_function_call(fn, current_statement);

@@ -97,6 +97,12 @@ static char *preprocess_block(char *line, int *brace_count, char *accumulator,
       accumulator[(*acc_pos)++] = *ptr++;
     }
   }
+  if (*brace_count == 0 && *acc_pos > 0 && accumulator[*acc_pos - 1] != ' ') {
+    accumulator[(*acc_pos)++] = ' ';
+  }
+  if (*brace_count == 0 && *acc_pos > 0 && accumulator[*acc_pos - 1] != ' ') {
+    accumulator[(*acc_pos)++] = ' ';
+  }
   accumulator[*acc_pos] = '\0';
   return accumulator;
 }
@@ -151,6 +157,7 @@ ast *tree = parse_statement();
             continue;
           }
           exec(tree);
+          fflush(stdout);
           acc_pos = 0;
           accumulator[0] = '\0';
         }
