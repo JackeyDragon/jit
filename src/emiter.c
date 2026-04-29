@@ -499,6 +499,10 @@ int declare() {
           eval_expression(current_statement->data.DECLARE.expression, &status);
       if (status != 0)
         return status;
+      if (val.type == ERROR) {
+        printf("error: failed to evaluate expression\n");
+        return 1;
+      }
 
       insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name,
              val);
@@ -526,7 +530,6 @@ int declare() {
                         .value.data = elements};
     insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name,
            val);
-    free(elements);
     return 0;
   }
 
@@ -534,6 +537,10 @@ int declare() {
       eval_expression(current_statement->data.DECLARE.expression, &status);
   if (status != 0) {
     return status;
+  }
+  if (val.type == ERROR) {
+    printf("error: failed to evaluate expression\n");
+    return 1;
   }
   if (declared_type != val.type) {
     printf("error: cannot initialize %s variable with %s value\n",

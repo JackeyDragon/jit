@@ -1,0 +1,172 @@
+float test_set[7840000] = load_images(0);
+int test_labels[10000] = load_labels(0);
+
+float b0[20] = load_array(1);
+float W0[28*28*20] = load_array(0);
+print(5);
+float W1[20*20] = load_array(2);
+float b1[20] = load_array(3);
+float W2[20*10] = load_array(4);
+float b2[10] = load_array(5);
+
+array[float] get_img_nr(array[float] all_imgs, int nr){
+	int idx = nr * 784;
+	float img[784] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
+	int i = 0;
+	lbl_get_img_nr:
+	if (i == 784)
+		goto ret_get_img_nr;
+	img[i] = all_imgs[idx+i];
+	i=i+1;
+	goto lbl_get_img_nr;
+	ret_get_img_nr:
+	return img;
+}
+
+array[float] sigmoid(array[float] vector){
+	int l = len(vector);
+	int i = 0;
+	lbl_sigmoid:
+	if (i == l)
+		goto ret_sigmoid;
+	vector[i] = 1. / (1.+ exp(0. - vector[i]) );
+	i=i+1;
+	goto lbl_sigmoid;
+	ret_sigmoid:
+	return vector;
+}
+
+array[float] softmax(array[float] vector){
+	int l = len(vector);
+	int i = 0;
+	
+	float sum = 0.;
+	lbl_softmax_0:
+	if (i == l)
+		goto next_softmax;
+	sum = sum + exp(vector[i]);
+	i=i+1;
+	goto lbl_softmax_0;
+	next_softmax:
+	
+	i=0;
+	lbl_softmax_1:
+	if (i == l)
+		goto ret_softmax;
+	vector[i] = exp(vector[i]) / sum;
+	i=i+1;
+	goto lbl_softmax_1;
+	ret_softmax:
+	
+	return vector;
+}
+
+array[float] mat_vec_prod(array[float] matrix, array[float] vector, array[float] erg_vec){
+	int h = len(erg_vec);
+	int w = len(vector);
+	int i=0;
+	int j=0;
+	
+	lbl_mat_vec_prod_outer:
+	if (i == h)
+		goto ret_mat_vec_prod;
+	j=0;
+	lbl_mat_vec_prod_inner:
+	if (j == w)
+		goto ret_mat_vec_prod_inner;
+	erg_vec[i] = erg_vec[i] + matrix[j*h+i] * vector[j];
+	j=j+1;
+	goto lbl_mat_vec_prod_inner;
+	ret_mat_vec_prod_inner:
+	i=i+1;
+	goto lbl_mat_vec_prod_outer;
+	
+	ret_mat_vec_prod:
+	return erg_vec;
+}
+
+array[float] add_vec(array[float] vec1, array[float] vec2){
+	int i = 0;
+	int l = len(vec1);
+	lbl_add_vec:
+	if (i == l)
+		goto ret_add_vec;
+	vec1[i] = vec1[i]+ vec2[i];
+	i=i+1;
+	goto lbl_add_vec;
+	ret_add_vec:
+	return vec1;
+}
+
+array[float] forward(array[float] img){
+	float vec0[20] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
+	vec0 = mat_vec_prod(W0,img,vec0);
+	vec0 = add_vec(vec0,b0);
+	vec0 = sigmoid(vec0);
+	float vec1[20] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
+	vec1 = mat_vec_prod(W1,vec0,vec1);
+	vec1 = add_vec(vec1,b1);
+	vec1 = sigmoid(vec1);
+	float erg[10] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
+	erg = mat_vec_prod(W2,vec1,erg);
+	erg = add_vec(erg,b2);
+	return erg;
+}
+
+array[float] sigmoid_grad(array[float] x, array[float] grad_output){
+	x = sigmoid(x);
+	int l=len(x);
+	int i =0;
+	lbl_sigmoid_grad:
+	if (i == l)
+		goto ret_sigmoid_grad;
+	x[i] = grad_output[i]*s[i]*(1-s[i]);
+	i=i+1;
+	goto lbl_sigmoid_grad;
+	ret_sigmoid_grad:
+	return x;
+}
+
+
+int argmax(array[float] vector){
+	float max = vector[0];
+	int argmax= 0;
+	int l= len(vector);
+	int i=1;
+	lbl_argmax:
+	if(i==l)
+		goto return_argmax;
+	if(vector[i] > max)
+		argmax = i;	
+	if(vector[i] > max)
+		max = vector[i];
+	i= i+1;
+	goto lbl_argmax;
+	return_argmax:
+	return argmax;
+}
+
+int check_testset(int num){
+	float correct =0.;
+	float total =0.;
+	int i = 0;
+	lbl_check_testset:
+	if (i == num)
+		goto ret_check_testset;
+	float img[28*28] = get_img_nr(test_set,i);
+	float logits[10]= forward(img);
+	float probabs[10] = softmax(logits);
+	print(test_labels[i]);
+	print(probabs);
+	if(argmax(probabs) == test_labels[i])
+		correct = correct +1.;
+	total = total +1.;
+	i=i+1;
+	goto lbl_check_testset;
+	ret_check_testset:
+	print(correct/total);
+	return 1;
+}
+
+
+check_testset(600);
