@@ -23,7 +23,7 @@ void init_table();
 void reset_table();
 void print_table();
 value *lookup(char *name);
-int insert(char *name, value *val);
+int insert(char *name, value val);
 int enter(void);
 int leave(void);
 int insert_function(ast *func);

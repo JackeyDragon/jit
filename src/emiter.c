@@ -150,7 +150,7 @@ value exec_function_call(function *function, ast *call) {
       if (val.type != function->parameter[i].type || val.array)
         return ERROR_VALUE;
     }
-    insert(function->parameter[i].name, valuedup(&val));
+    insert(function->parameter[i].name, val);
     provided = provided->data.PARAMETER.next_param;
   }
 
@@ -495,16 +495,15 @@ int declare() {
         printf("error: array must have at least one element\n");
         return 1;
       }
-value tmp =
-      eval_expression(current_statement->data.DECLARE.expression, &status);
-  if (status != 0)
-    return status;
+      value val =
+          eval_expression(current_statement->data.DECLARE.expression, &status);
+      if (status != 0)
+        return status;
 
-  value *val = valuedup(&tmp);
-  insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name,
-         val);
-  return 0;
-}
+      insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name,
+             val);
+      return 0;
+    }
 
     value *elements = malloc(sizeof(value) * array_count);
     for (int i = 0; i < array_count; i++) {
@@ -521,29 +520,27 @@ value tmp =
       }
     }
 
-    value arr_val = (value){.type = declared_type,
-                            .array = true,
-                            .size = array_count,
-                            .value.data = elements};
-    value *val = valuedup(&arr_val);
+    value val = (value){.type = declared_type,
+                        .array = true,
+                        .size = array_count,
+                        .value.data = elements};
     insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name,
            val);
     free(elements);
     return 0;
   }
 
-  value tmp =
+  value val =
       eval_expression(current_statement->data.DECLARE.expression, &status);
   if (status != 0) {
     return status;
   }
-  if (declared_type != tmp.type) {
+  if (declared_type != val.type) {
     printf("error: cannot initialize %s variable with %s value\n",
            declared_type == FLOAT ? "float" : "int",
-           tmp.type == FLOAT ? "float" : "int");
+           val.type == FLOAT ? "float" : "int");
     return 1;
   }
-  value *val = valuedup(&tmp);
   insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name, val);
   return status;
 }

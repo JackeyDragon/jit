@@ -6,7 +6,7 @@
 
 #define NAME value_map
 #define KEY_TY char *
-#define VAL_TY value *
+#define VAL_TY value
 #define HASH_FN vt_hash_string
 #define CMPR_FN vt_cmpr_string
 #include "verstable.h"
@@ -49,7 +49,7 @@ void reset_table() {
   value_map_init(&global_scope);
 }
 
-int insert(char *name, value *val) {
+int insert(char *name, value val) {
   if (top && top->scope) {
     value_map_insert(top->scope, name, val);
   } else {
@@ -64,14 +64,14 @@ value *lookup(char *name) {
   while (tmp != NULL) {
     value_map_itr it = value_map_get(tmp->scope, name);
     if (!value_map_is_end(it)) {
-      return it.data->val;
+      return &it.data->val;
     }
     tmp = tmp->previous;
   }
 
   value_map_itr it = value_map_get(&global_scope, name);
   if (!value_map_is_end(it)) {
-    return it.data->val;
+    return &it.data->val;
   }
   return NULL;
 }
@@ -80,13 +80,13 @@ void print_table() {
   printf("=== Global Scope ===\n");
   for (value_map_itr it = value_map_first(&global_scope); !value_map_is_end(it);
        it = value_map_next(it)) {
-    if (it.data->val->array) {
+    if (it.data->val.array) {
       printf("[%s: array of %s, size %d]\n", it.data->key,
-             it.data->val->type == FLOAT ? "float" : "int", it.data->val->size);
-    } else if (it.data->val->type == FLOAT) {
-      printf("[%s: float %f]\n", it.data->key, it.data->val->value.f);
+             it.data->val.type == FLOAT ? "float" : "int", it.data->val.size);
+    } else if (it.data->val.type == FLOAT) {
+      printf("[%s: float %f]\n", it.data->key, it.data->val.value.f);
     } else {
-      printf("[%s: int %d]\n", it.data->key, it.data->val->value.i);
+      printf("[%s: int %d]\n", it.data->key, it.data->val.value.i);
     }
   }
 
@@ -97,14 +97,13 @@ void print_table() {
     printf("Scope %d:\n", level);
     for (value_map_itr it = value_map_first(tmp->scope); !value_map_is_end(it);
          it = value_map_next(it)) {
-      if (it.data->val->array) {
+      if (it.data->val.array) {
         printf("  [%s: array of %s, size %d]\n", it.data->key,
-               it.data->val->type == FLOAT ? "float" : "int",
-               it.data->val->size);
-      } else if (it.data->val->type == FLOAT) {
-        printf("  [%s: float %f]\n", it.data->key, it.data->val->value.f);
+               it.data->val.type == FLOAT ? "float" : "int", it.data->val.size);
+      } else if (it.data->val.type == FLOAT) {
+        printf("  [%s: float %f]\n", it.data->key, it.data->val.value.f);
       } else {
-        printf("  [%s: int %d]\n", it.data->key, it.data->val->value.i);
+        printf("  [%s: int %d]\n", it.data->key, it.data->val.value.i);
       }
     }
     tmp = tmp->next;
