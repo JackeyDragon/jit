@@ -1,2 +1,2 @@
-float W0[28 * 28 * 20] = load_array(0);
 float b0[20] = load_array(1);
+print(b0);

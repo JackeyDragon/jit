@@ -1,10 +1,14 @@
+
 float test_set[7840000] = load_images(0);
 int test_labels[10000] = load_labels(0);
-
+print(5);
 float b0[20] = load_array(1);
-float W0[28*28*20] = load_array(0);
+print(5);
+float W0[282820] = load_array(0);
 print(5);
 float W1[20*20] = load_array(2);
+print(5);
+
 float b1[20] = load_array(3);
 float W2[20*10] = load_array(4);
 float b2[10] = load_array(5);
