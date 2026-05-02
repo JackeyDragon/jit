@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct token *current;
+
 ast *parse_statement();
 ast *parse_declaration_ast();
 ast *parse_assignment_ast();
@@ -19,8 +21,6 @@ ast *parse_function_call_arguments();
 ast *parse_identifyer();
 ast *parse_lable();
 ast *parse_return();
-
-struct token *current;
 
 int expect(enum token_type type) {
   if (!current) {
@@ -193,7 +193,8 @@ ast *parse_statement() {
       }
     } else if (current->type == TYPE_ARRAY) {
       struct token *peek = current->next;
-      if (peek && peek->type == IDENTIFYER && peek->next && peek->next->type == BRACKET_OPEN) {
+      if (peek && peek->type == IDENTIFYER && peek->next &&
+          peek->next->type == BRACKET_OPEN) {
         // array type followed by identifier and () = function call
         stmt = parse_expression(0);
       } else {
@@ -428,7 +429,7 @@ ast *parse_assignment_ast() {
 
   ast *assign = malloc(sizeof(ast));
   assign->type = NODE_ASSIGN;
-  
+
   if (array_index) {
     // Create a proper ARRAY_ACCESS node
     ast *arr_access = malloc(sizeof(ast));
@@ -439,7 +440,7 @@ ast *parse_assignment_ast() {
   } else {
     assign->data.ASSIGN.identifyer = name;
   }
-  
+
   assign->data.ASSIGN.expression = parse_expression(0);
   assign->next_statement = NULL;
 

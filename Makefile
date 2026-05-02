@@ -91,3 +91,8 @@ integration: $(TARGET)
 benchmark: tests/test_benchmark
 	@echo "=== Running Benchmarks ==="
 	./tests/test_benchmark
+
+test_atomic: src/code_generator.c src/parser.c src/lexer.c src/ast.c
+	$(CC) $(CFLAGS) -DTEST_ATOMIC -o $@ $^ $(LDFLAGS)
+
+.PHONY: test_atomic

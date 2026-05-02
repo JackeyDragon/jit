@@ -169,8 +169,9 @@ int check_testset(int num){
 	goto lbl_check_testset;
 	ret_check_testset:
 	print(correct/total);
+  print(b1);
 	return 1;
 }
 
 
-check_testset(600);
+check_testset(100);
