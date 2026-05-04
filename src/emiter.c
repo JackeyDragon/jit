@@ -105,9 +105,11 @@ value exec_block(ast *block) {
   }
   leave();
   current_statement = tmp;
-  value *return_tmp = return_value;
+  value return_tmp = *return_value;
+  return_value->value.data = NULL;
+  free_value(return_value);
   return_value = NULL;
-  return *return_tmp;
+  return return_tmp;
 }
 
 value exec_function_call(function *function, ast *call) {

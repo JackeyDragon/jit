@@ -8,6 +8,7 @@
   (value){.type = VOID, .size = 0, .array = false, .value.i = 0}
 #define TRUE_VALUE (value){.type = INT, .size = sizeof(int), .value.i = 1}
 #define FALSE_VALUE (value){.type = INT, .size = sizeof(int), .value.i = 0}
+#define NULL_VALUE (value){.type = NULL_VAL, .size = 0, .value.i = 0}
 
 typedef enum build_in_types {
   INT,
@@ -15,7 +16,8 @@ typedef enum build_in_types {
   ARRAY,
   FUNCTION,
   VOID,
-  ERROR
+  ERROR,
+  NULL_VAL
 } build_in_types;
 
 typedef struct value {
