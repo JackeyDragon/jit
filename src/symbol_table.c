@@ -52,6 +52,12 @@ void reset_table() {
   value_map_init(&global_scope);
 }
 
+void cleanup_all_scopes() {
+  while (top) leave();
+  value_map_cleanup(&global_scope);
+  value_map_init(&global_scope);
+}
+
 int insert(char *name, value val) {
   if (top && top->scope) {
     value_map_insert(top->scope, name, val);

@@ -21,6 +21,7 @@ typedef struct function {
 
 void init_table();
 void reset_table();
+void cleanup_all_scopes();
 void print_table();
 value *lookup(char *name);
 int insert(char *name, value val);

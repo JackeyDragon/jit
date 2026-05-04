@@ -24,6 +24,7 @@ void overwrite_value(value src, value *target) {
   if (src.array && src.size > 0 && src.value.data) {
     target->value.data = malloc(sizeof(value) * src.size);
     memcpy(target->value.data, src.value.data, sizeof(value) * src.size);
+    free(src.value.data);
   }
 }
 

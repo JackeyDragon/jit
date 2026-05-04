@@ -201,5 +201,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  cleanup_all_scopes();
   return EXIT_SUCCESS;
 }

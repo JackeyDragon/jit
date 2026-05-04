@@ -190,6 +190,7 @@ value exec_function_call(function *function, ast *call) {
       return ERROR_VALUE;
     }
     memcpy(new_data, ret_val.value.data, sizeof(value) * ret_val.size);
+    free(ret_val.value.data);
     ret_val.value.data = new_data;
   }
 
