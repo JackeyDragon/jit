@@ -16,17 +16,17 @@ value *valuedup(value *val) {
   return tmp;
 }
 
-void overwrite_value(value src, value *target) {
-  target->size = src.size;
-  target->type = src.type;
-  target->array = src.array;
-  if (src.array && src.size > 0 && src.value.data &&
-      src.value.data != target->value.data) {
+void overwrite_value(value *src, value *target) {
+  target->size = src->size;
+  target->type = src->type;
+  target->array = src->array;
+  if (src->array && src->size > 0 && src->value.data &&
+      src->value.data != target->value.data) {
     free(target->value.data);
-    target->value.data = malloc(sizeof(value) * src.size);
-    memcpy(target->value.data, src.value.data, sizeof(value) * src.size);
+    target->value.data = src->value.data;
+    src->value.data = NULL;
   } else {
-    target->value = src.value;
+    target->value = src->value;
   }
 }
 

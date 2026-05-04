@@ -484,7 +484,7 @@ int exec_assign() {
            existing->type == FLOAT ? "float" : "int", name);
     return 1;
   }
-  overwrite_value(tmp, existing);
+  overwrite_value(&tmp, existing);
   return status;
 }
 
