@@ -160,7 +160,17 @@ value exec_function_call(function *function, ast *call) {
         return ERROR_VALUE;
       }
     }
-    insert(function->parameter[i].name, val);
+    // Deep copy array data to avoid shared pointers between scopes
+    if (val.array && val.size > 0 && val.value.data) {
+      value *new_val = malloc(sizeof(value));
+      *new_val = val;
+      new_val->value.data = malloc(sizeof(value) * val.size);
+      memcpy(new_val->value.data, val.value.data, sizeof(value) * val.size);
+      insert(function->parameter[i].name, *new_val);
+      free(new_val);
+    } else {
+      insert(function->parameter[i].name, val);
+    }
     provided = provided->data.PARAMETER.next_param;
   }
 
@@ -169,6 +179,17 @@ value exec_function_call(function *function, ast *call) {
 
   value ret_val = exec_block(function->code_block);
   fflush(stdout);
+
+  // Deep copy array data to avoid double-free when scope is cleaned up
+  if (ret_val.array && ret_val.size > 0 && ret_val.value.data) {
+    void *new_data = malloc(sizeof(value) * ret_val.size);
+    if (!new_data) {
+      leave();
+      return ERROR_VALUE;
+    }
+    memcpy(new_data, ret_val.value.data, sizeof(value) * ret_val.size);
+    ret_val.value.data = new_data;
+  }
 
   leave();
   return ret_val;
