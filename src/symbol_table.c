@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+void value_dtor(value val);
+#define VAL_DTOR_FN value_dtor
+
 #define NAME value_map
 #define KEY_TY char *
 #define VAL_TY value
@@ -173,6 +176,8 @@ int insert_function(ast *func_ast) {
       func_ast->data.FUNCTION_DECLARATION.identifyer->data.IDENTIFYER.name;
   func->return_type = func_ast->data.FUNCTION_DECLARATION.return_type;
   func->code_block = func_ast->data.FUNCTION_DECLARATION.block;
+  func->c_function = NULL;
+  func->build_in = false;
 
   func->parameter_count =
       count_parameters(func_ast->data.FUNCTION_DECLARATION.parameter);
@@ -228,4 +233,11 @@ ast *lookup_lable(char *name) {
     return it.data->val;
   }
   return NULL;
+}
+
+void value_dtor(value val) {
+  if (val.array)
+    free(val.value.data);
+
+  return;
 }

@@ -60,7 +60,6 @@ const char *token_type_to_string(enum token_type type) {
 
 void print_tokens(struct token *head) {
   struct token *current = head;
-
   while (current != NULL) {
     printf("[%s](%s) ", token_type_to_string(current->type),
            current->value ? current->value : "NULL");
@@ -211,6 +210,8 @@ int read_digit(char *string, struct token *token) {
 
 struct token *tokinize(char *string) {
   struct token *token = malloc(sizeof(struct token));
+  token->value = NULL;
+  token->type = UNKNOWN;
   // remove leading spaces
   while (strncmp(string, " ", 1) == 0 || strncmp(string, "\t", 1) == 0) {
     string++;
@@ -238,21 +239,21 @@ struct token *tokinize(char *string) {
     } else if (strncmp(string + pos, ";", 1) == 0) {
 
       token->type = SEMICOLON;
-      token->value = ";";
+      token->value = strdup(";");
       pos++;
 
       break;
     } else if (strncmp(string + pos, ",", 1) == 0) {
 
       token->type = COMMA;
-      token->value = ",";
+      token->value = strdup(",");
       pos++;
 
       break;
     } else if (strncmp(string + pos, ":", 1) == 0) {
 
       token->type = COLON;
-      token->value = ":";
+      token->value = strdup(":");
       pos++;
 
       break;
@@ -309,4 +310,13 @@ struct token *tokinize(char *string) {
     token->next = tokinize(string + pos);
   }
   return token;
+}
+
+void free_token_list(struct token *head) {
+  if (!head)
+    return;
+  free_token_list(head->next);
+  free(head->value);
+  free(head);
+  return;
 }

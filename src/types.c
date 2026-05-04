@@ -26,3 +26,11 @@ void overwrite_value(value src, value *target) {
     memcpy(target->value.data, src.value.data, sizeof(value) * src.size);
   }
 }
+
+void free_value(value *val) {
+  if (val->array) {
+    free(val->value.data);
+  }
+  free(val);
+  return;
+}

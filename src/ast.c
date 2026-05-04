@@ -195,11 +195,11 @@ void print_ast(ast *node, int depth) {
       }
       printf("]\n");
     } else {
-      printf("TYPE: %s\n", node->data.TYPE.type == INT ? "int" : 
-             node->data.TYPE.type == FLOAT ? "float" :
-             node->data.TYPE.type == VOID ? "void" :
-             node->data.TYPE.type == FUNCTION ? "function" :
-             "unknown");
+      printf("TYPE: %s\n", node->data.TYPE.type == INT        ? "int"
+                           : node->data.TYPE.type == FLOAT    ? "float"
+                           : node->data.TYPE.type == VOID     ? "void"
+                           : node->data.TYPE.type == FUNCTION ? "function"
+                                                              : "unknown");
     }
     break;
   case NODE_IF_CONDITION:
@@ -266,4 +266,10 @@ void print_ast(ast *node, int depth) {
       print_ast(node->data.PARAMETER_DECLARATION.next_param, depth + 1);
     }
   }
+}
+
+ast *malloc_ast() {
+  ast *node = calloc(1, sizeof(ast));
+  node->type = NODE_UNINITIALIZED;
+  return node;
 }

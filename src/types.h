@@ -31,4 +31,5 @@ typedef struct value {
 
 value *valuedup(value *value);
 void overwrite_value(value src, value *target);
+void free_value(value *val);
 #endif // !TYPES_H

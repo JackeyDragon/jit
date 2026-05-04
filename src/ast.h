@@ -1,9 +1,9 @@
 #ifndef AST_H
 #define AST_H
 
-#include <stdbool.h>
 #include "tokenizer.h"
 #include "types.h"
+#include <stdbool.h>
 
 typedef enum {
   NODE_EXPRESION,
@@ -29,6 +29,7 @@ typedef enum {
   NODE_PARAMETER,
   NODE_RETURN,
   NODE_LABLE,
+  NODE_UNINITIALIZED,
   NODE_ROOT
 } ast_type;
 
@@ -119,5 +120,5 @@ binding_power get_binding_power(enum token_type type);
 ast_type token_type_to_ast_type(enum token_type type);
 ast *clone_ast(ast *source);
 void print_ast(ast *node, int depth);
-
+ast *malloc_ast();
 #endif

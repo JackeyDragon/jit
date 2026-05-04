@@ -41,7 +41,7 @@ ast *parse_expression(int min_bp) {
 
   switch (current->type) {
   case LITERAL_FLOAT: {
-    lhs = malloc(sizeof(ast));
+    lhs = malloc_ast();
     lhs->type = NODE_FLOAT;
     lhs->data.LITTERAL.value.type = FLOAT;
     lhs->data.LITTERAL.value.value.f = atof(current->value);
@@ -49,7 +49,7 @@ ast *parse_expression(int min_bp) {
     break;
   }
   case LITERAL_INT: {
-    lhs = malloc(sizeof(ast));
+    lhs = malloc_ast();
     lhs->type = NODE_INT;
     lhs->data.LITTERAL.value.type = INT;
     lhs->data.LITTERAL.value.value.i = atoi(current->value);
@@ -57,7 +57,7 @@ ast *parse_expression(int min_bp) {
   } break;
   case IDENTIFYER:
     if (current->next && current->next->type == BRACKET_OPEN) {
-      char *fn_name = current->value;
+      char *fn_name = strdup(current->value);
       current = current->next; // consume function name
       current = current->next; // consume (
       ast *args = parse_function_call_arguments();
@@ -67,12 +67,12 @@ ast *parse_expression(int min_bp) {
       }
       current = current->next;
 
-      lhs = malloc(sizeof(ast));
+      lhs = malloc_ast();
       lhs->type = NODE_FUNCTION_CALL;
       lhs->data.FUNCTION_CALL.name = fn_name;
       lhs->data.FUNCTION_CALL.params = args;
     } else if (current->next && current->next->type == SQUARE_BRACKET_OPEN) {
-      char *arr_name = current->value;
+      char *arr_name = strdup(current->value);
       current = current->next; // consume [
       current = current->next; // consume [
       ast *index = parse_expression(0);
@@ -82,16 +82,16 @@ ast *parse_expression(int min_bp) {
       }
       current = current->next;
 
-      lhs = malloc(sizeof(ast));
+      lhs = malloc_ast();
       lhs->type = NODE_ARRAY_ACCESS;
-      lhs->data.ARRAY_ACCESS.identifyer = malloc(sizeof(ast));
+      lhs->data.ARRAY_ACCESS.identifyer = malloc_ast();
       lhs->data.ARRAY_ACCESS.identifyer->type = NODE_IDENTIFYER;
       lhs->data.ARRAY_ACCESS.identifyer->data.IDENTIFYER.name = arr_name;
       lhs->data.ARRAY_ACCESS.index = index;
     } else {
-      lhs = malloc(sizeof(ast));
+      lhs = malloc_ast();
       lhs->type = NODE_IDENTIFYER;
-      lhs->data.IDENTIFYER.name = current->value;
+      lhs->data.IDENTIFYER.name = strdup(current->value);
       current = current->next;
     }
     break;
@@ -142,7 +142,7 @@ ast *parse_expression(int min_bp) {
 
     current = current->next;
     ast *rhs = parse_expression(power.right);
-    ast *new_lhs = malloc(sizeof(ast));
+    ast *new_lhs = malloc_ast();
     new_lhs->type = token_type_to_ast_type(op);
     new_lhs->data.EXPRESSION.lhs = lhs;
     new_lhs->data.EXPRESSION.rhs = rhs;
@@ -240,7 +240,6 @@ ast *parse_statement() {
       tail = stmt;
     }
   }
-
   return first;
 }
 
@@ -248,7 +247,7 @@ ast *parse_type() {
   if (!current)
     return NULL;
 
-  ast *type = malloc(sizeof(ast));
+  ast *type = malloc_ast();
   type->type = NODE_TYPE;
   switch (current->type) {
   case TYPE_FLOAT:
@@ -281,10 +280,10 @@ ast *parse_type() {
 ast *parse_identifyer() {
   if (!current || current->type != IDENTIFYER)
     return NULL;
-  ast *identifyer = malloc(sizeof(ast));
+  ast *identifyer = malloc_ast();
 
   identifyer->type = NODE_IDENTIFYER;
-  identifyer->data.IDENTIFYER.name = current->value;
+  identifyer->data.IDENTIFYER.name = strdup(current->value);
 
   current = current->next;
   return identifyer;
@@ -301,7 +300,7 @@ ast *parse_declaration_ast() {
     return NULL;
   }
 
-  ast *decl = malloc(sizeof(ast));
+  ast *decl = malloc_ast();
   decl->type = NODE_DECLAR;
   decl->data.DECLARE.type = type->data.TYPE.type;
   decl->data.DECLARE.identifyer = name;
@@ -393,7 +392,7 @@ ast *parse_if() {
   if (!current || current->type != KEYWORD_IF)
     return NULL;
 
-  ast *stmt_if = malloc(sizeof(ast));
+  ast *stmt_if = malloc_ast();
   stmt_if->type = NODE_IF_CONDITION;
 
   current = current->next;
@@ -427,12 +426,12 @@ ast *parse_assignment_ast() {
     return NULL;
   current = current->next;
 
-  ast *assign = malloc(sizeof(ast));
+  ast *assign = malloc_ast();
   assign->type = NODE_ASSIGN;
 
   if (array_index) {
     // Create a proper ARRAY_ACCESS node
-    ast *arr_access = malloc(sizeof(ast));
+    ast *arr_access = malloc_ast();
     arr_access->type = NODE_ARRAY_ACCESS;
     arr_access->data.ARRAY_ACCESS.identifyer = name;
     arr_access->data.ARRAY_ACCESS.index = array_index;
@@ -462,7 +461,7 @@ ast *parse_parameter_declaration() {
     return NULL;
   }
 
-  ast *param = malloc(sizeof(ast));
+  ast *param = malloc_ast();
   param->type = NODE_PARAMETER_DECLARATION;
   param->data.PARAMETER_DECLARATION.type = type;
   param->data.PARAMETER_DECLARATION.name = name;
@@ -488,7 +487,7 @@ ast *parse_parameter_declaration() {
       return NULL;
     }
 
-    ast *next_param = malloc(sizeof(ast));
+    ast *next_param = malloc_ast();
     next_param->type = NODE_PARAMETER_DECLARATION;
     next_param->data.PARAMETER_DECLARATION.type = type;
     next_param->data.PARAMETER_DECLARATION.name = name;
@@ -537,7 +536,7 @@ ast *parse_function_declaration() {
     return NULL;
   }
 
-  ast *func = malloc(sizeof(ast));
+  ast *func = malloc_ast();
   func->type = NODE_FUNCTION_DECLARATION;
   func->data.FUNCTION_DECLARATION.return_type = type;
   func->data.FUNCTION_DECLARATION.identifyer = name;
@@ -572,7 +571,7 @@ ast *parse_block() {
     return NULL;
   }
 
-  ast *block = malloc(sizeof(ast));
+  ast *block = malloc_ast();
   block->type = NODE_BLOCK;
   block->data.BLOCK.count = count;
   block->data.BLOCK.array = malloc(sizeof(ast *) * (count > 0 ? count : 1));
@@ -596,7 +595,7 @@ ast *parse_function_call_arguments() {
   if (!expr)
     return NULL;
 
-  first = tail = malloc(sizeof(ast));
+  first = tail = malloc_ast();
   first->type = NODE_PARAMETER;
   first->data.PARAMETER.expression = expr;
   first->data.PARAMETER.next_param = NULL;
@@ -607,7 +606,7 @@ ast *parse_function_call_arguments() {
     expr = parse_expression(0);
     if (!expr)
       return NULL;
-    tail->data.PARAMETER.next_param = malloc(sizeof(ast));
+    tail->data.PARAMETER.next_param = malloc_ast();
     tail = tail->data.PARAMETER.next_param;
     tail->type = NODE_PARAMETER;
     tail->next_statement = NULL;
@@ -634,7 +633,7 @@ ast *parse_function_call() {
   if (current && current->type == BRACKET_CLOSE)
     current = current->next;
 
-  ast *call = malloc(sizeof(ast));
+  ast *call = malloc_ast();
   call->type = NODE_FUNCTION_CALL;
   call->data.FUNCTION_CALL.name = name->data.IDENTIFYER.name;
   call->data.FUNCTION_CALL.params = args;
@@ -650,7 +649,7 @@ ast *parse_return() {
   ast *expression = parse_expression(0);
   if (!expression)
     return NULL;
-  ast *node_return = malloc(sizeof(ast));
+  ast *node_return = malloc_ast();
   node_return->type = NODE_RETURN;
   node_return->data.RETURN.expression = expression;
 
@@ -669,7 +668,7 @@ ast *parse_lable() {
     free(name);
     return NULL;
   }
-  ast *lable = malloc(sizeof(ast));
+  ast *lable = malloc_ast();
   lable->type = NODE_LABLE;
   lable->data.LABLE.identifyer = name;
   return lable;

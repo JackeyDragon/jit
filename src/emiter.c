@@ -127,14 +127,20 @@ value exec_function_call(function *function, ast *call) {
            param_ast = param_ast->data.PARAMETER.next_param) {
         value tmp =
             eval_expression(param_ast->data.PARAMETER.expression, &status);
-        params[i++] = valuedup(&tmp);
         if (status) {
+          print("failed to eval param expression in buildin function");
+          printf("on param num: %d\n", i);
           free(params);
           return ERROR_VALUE;
         }
+
+        params[i++] = valuedup(&tmp);
       }
     }
     value result = function->c_function(params, actual_count);
+    for (int i = 0; i < actual_count; i++) {
+      free_value(params[i]);
+    }
     free(params);
     return result;
   }
@@ -144,11 +150,15 @@ value exec_function_call(function *function, ast *call) {
   for (int i = 0; i < function->parameter_count && provided; i++) {
     value val = eval_expression(provided->data.PARAMETER.expression, &status);
     if (function->parameter[i].array) {
-      if (!val.array || val.type != function->parameter[i].type)
+      if (!val.array || val.type != function->parameter[i].type) {
+        print("type miss match in params");
         return ERROR_VALUE;
+      }
     } else {
-      if (val.type != function->parameter[i].type || val.array)
+      if (val.type != function->parameter[i].type || val.array) {
+        print("type miss match in params");
         return ERROR_VALUE;
+      }
     }
     insert(function->parameter[i].name, val);
     provided = provided->data.PARAMETER.next_param;
@@ -457,11 +467,11 @@ int exec_assign() {
 int exec_if() {
   int status = 0;
   value tmp = eval_expression(current_statement->data.IF.condition, &status);
-  value *val = valuedup(&tmp);
 
-  if (val->value.i == 0) {
+  if (tmp.value.i == 0) {
     current_statement = current_statement->next_statement;
   }
+
   return status;
 }
 

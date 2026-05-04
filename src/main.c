@@ -69,7 +69,7 @@ static char *readline(char *prompt) {
 }
 
 static char *preprocess_block(char *line, int *brace_count, char *accumulator,
-                               size_t *acc_pos) {
+                              size_t *acc_pos) {
   char *ptr = line;
   while (*ptr) {
     if (*ptr == '{') {
@@ -148,7 +148,8 @@ int main(int argc, char *argv[]) {
           struct token *head = tokinize(processed);
           current = head;
 
-ast *tree = parse_statement();
+          ast *tree = parse_statement();
+          free_token_list(head);
           if (!tree) {
             printf("syntax error\n");
             acc_pos = 0;
@@ -186,6 +187,7 @@ ast *tree = parse_statement();
         continue;
       }
       ast *tree = parse_statement();
+      free_token_list(head);
       if (!tree) {
         printf("syntax error\n");
         input = NULL;
