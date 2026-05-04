@@ -1,5 +1,6 @@
 #include "symbol_table.h"
 #include "ast.h"
+#include "code.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,6 +57,7 @@ void cleanup_all_scopes() {
   while (top) leave();
   value_map_cleanup(&global_scope);
   value_map_init(&global_scope);
+  code_cleanup();
 }
 
 int insert(char *name, value val) {

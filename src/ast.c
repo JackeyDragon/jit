@@ -273,3 +273,91 @@ ast *malloc_ast() {
   node->type = NODE_UNINITIALIZED;
   return node;
 }
+
+static void free_ast_node(ast *node) {
+  if (!node) return;
+
+  switch (node->type) {
+  case NODE_IDENTIFYER:
+    free(node->data.IDENTIFYER.name);
+    break;
+  case NODE_EXPRESION:
+  case NODE_OPERATION:
+    free_ast_node(node->data.EXPRESSION.lhs);
+    free_ast_node(node->data.EXPRESSION.rhs);
+    break;
+  case NODE_DECLAR:
+    free_ast_node(node->data.DECLARE.identifyer);
+    free_ast_node(node->data.DECLARE.expression);
+    free_ast_node(node->data.DECLARE.size);
+    if (node->data.DECLARE.array_values) {
+      for (int i = 0; i < node->data.DECLARE.array_count; i++) {
+        free_ast_node(node->data.DECLARE.array_values[i]);
+      }
+      free(node->data.DECLARE.array_values);
+    }
+    break;
+  case NODE_ASSIGN:
+    free_ast_node(node->data.ASSIGN.identifyer);
+    free_ast_node(node->data.ASSIGN.expression);
+    break;
+  case NODE_IF_CONDITION:
+    free_ast_node(node->data.IF.condition);
+    free_ast_node(node->data.IF.if_body);
+    free_ast_node(node->data.IF.else_body);
+    break;
+  case NODE_GOTO:
+    free_ast_node(node->data.GOTO.identifyer);
+    break;
+  case NODE_LABLE:
+    free_ast_node(node->data.LABLE.identifyer);
+    break;
+  case NODE_BLOCK:
+  case NODE_ARRAY:
+    if (node->data.BLOCK.array) {
+      for (int i = 0; i < node->data.BLOCK.count; i++) {
+        free_ast_node(node->data.BLOCK.array[i]);
+      }
+      free(node->data.BLOCK.array);
+    }
+    break;
+  case NODE_FUNCTION_DECLARATION:
+    free_ast_node(node->data.FUNCTION_DECLARATION.return_type);
+    free_ast_node(node->data.FUNCTION_DECLARATION.identifyer);
+    free_ast_node(node->data.FUNCTION_DECLARATION.parameter);
+    free_ast_node(node->data.FUNCTION_DECLARATION.block);
+    break;
+  case NODE_PARAMETER_DECLARATION:
+    free_ast_node(node->data.PARAMETER_DECLARATION.type);
+    free_ast_node(node->data.PARAMETER_DECLARATION.name);
+    free_ast_node(node->data.PARAMETER_DECLARATION.next_param);
+    break;
+  case NODE_FUNCTION_CALL:
+    free(node->data.FUNCTION_CALL.name);
+    free_ast_node(node->data.FUNCTION_CALL.params);
+    break;
+  case NODE_PARAMETER:
+    free_ast_node(node->data.PARAMETER.expression);
+    free_ast_node(node->data.PARAMETER.next_param);
+    break;
+  case NODE_RETURN:
+    free_ast_node(node->data.RETURN.expression);
+    break;
+  case NODE_ARRAY_ACCESS:
+    free_ast_node(node->data.ARRAY_ACCESS.identifyer);
+    free_ast_node(node->data.ARRAY_ACCESS.index);
+    break;
+  default:
+    break;
+  }
+
+  free(node);
+}
+
+void free_ast(ast *head) {
+  while (head) {
+    ast *next = head->next_statement;
+    free_ast_node(head);
+    head = next;
+  }
+}

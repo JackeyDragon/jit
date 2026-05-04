@@ -121,4 +121,5 @@ ast_type token_type_to_ast_type(enum token_type type);
 ast *clone_ast(ast *source);
 void print_ast(ast *node, int depth);
 ast *malloc_ast();
+void free_ast(ast *head);
 #endif

@@ -98,7 +98,6 @@ static char *print_expr_rec(ast *node, int depth) {
       op_str = "?";
       break;
     }
-    // Use local variables to hold string results before composing
     char lhs_result[128];
     char rhs_result[128];
     snprintf(lhs_result, 128, "%s",
@@ -164,13 +163,15 @@ char *code_print_statement(ast *node) {
 }
 
 void code_print_all(void) {
-  if (!head)
-    return;
-
   ast *tmp = head;
   int line_num = 0;
   while (tmp) {
     printf("%d: %s\n", line_num++, code_print_statement(tmp));
     tmp = tmp->next_statement;
   }
+}
+
+void code_cleanup(void) {
+  free_ast(head);
+  head = tail = NULL;
 }

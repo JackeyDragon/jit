@@ -12,5 +12,6 @@ int set_current_line(int line);
 char *code_print_expr(ast *node);
 char *code_print_statement(ast *node);
 void code_print_all(void);
+void code_cleanup(void);
 
 #endif
