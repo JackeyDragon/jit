@@ -309,7 +309,6 @@ ast *parse_declaration_ast() {
   decl->data.DECLARE.expression = NULL;
   decl->data.DECLARE.array_values = NULL;
   decl->data.DECLARE.array_count = 0;
-  decl->data.DECLARE.array_fill = false;
 
   if (current && current->type == SQUARE_BRACKET_OPEN) {
     decl->data.DECLARE.array = true;
@@ -373,9 +372,6 @@ ast *parse_declaration_ast() {
     current = current->next;
   } else {
     decl->data.DECLARE.expression = parse_expression(0);
-    if (decl->data.DECLARE.array) {
-      decl->data.DECLARE.array_fill = true;
-    }
   }
 
   decl->next_statement = NULL;
