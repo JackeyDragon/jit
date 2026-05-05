@@ -520,6 +520,38 @@ int declare() {
   build_in_types declared_type = current_statement->data.DECLARE.type;
 
   if (current_statement->data.DECLARE.array) {
+    // Handle array fill initializer (int x[size] = 0;)
+    if (current_statement->data.DECLARE.array_fill) {
+      value size_val = eval_expression(current_statement->data.DECLARE.size, &status);
+      if (status != 0 || size_val.type != INT) {
+        printf("error: array size must be an integer\n");
+        return 1;
+      }
+      int array_size = size_val.value.i;
+      value fill_val = eval_expression(current_statement->data.DECLARE.expression, &status);
+      if (status != 0)
+        return status;
+      if (fill_val.type == ERROR) {
+        printf("error: failed to evaluate fill expression\n");
+        return 1;
+      }
+      if (fill_val.type != declared_type) {
+        printf("error: fill value type mismatch\n");
+        return 1;
+      }
+      value *elements = malloc(sizeof(value) * array_size);
+      for (int i = 0; i < array_size; i++) {
+        elements[i] = fill_val;
+      }
+      value val = (value){.type = declared_type,
+                          .array = true,
+                          .size = array_size,
+                          .value.data = elements};
+      insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name,
+             val);
+      return 0;
+    }
+
     int array_count = current_statement->data.DECLARE.array_count;
 
     // Handle array from expression (e.g., int x[] = foo(); or int x[100] =

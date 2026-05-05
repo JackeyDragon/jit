@@ -58,6 +58,7 @@ typedef struct ast {
       ast *expression;
       ast **array_values;
       int array_count;
+      bool array_fill; // true if initialized with single fill value
     } DECLARE;
     struct ASSIGN {
       ast *identifyer;
