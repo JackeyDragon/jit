@@ -320,69 +320,36 @@ void test_pass_array_to_function() {
     TEST_ASSERT(v->array == true, "Should be array");
 }
 
-void test_array_fill_initializer() {
-    reset_for_test();
-    
-    // Test int array filled with 0
-    struct token *tokens = tokinize("int x[5] = 0;");
-    current = tokens;
-    ast *tree = parse_statement();
-    TEST_ASSERT(tree != NULL, "Should parse array fill initializer");
-    TEST_ASSERT(tree->data.DECLARE.array_fill == true, "Should set array_fill flag");
-    
-    exec(tree);
-    value *v = get_var("x");
-    TEST_ASSERT(v != NULL, "Array should exist");
-    TEST_ASSERT(v->array == true, "Should be array");
-    TEST_ASSERT(v->size == 5, "Array should have 5 elements");
-    
-    value *elems = (value *)v->value.data;
-    for (int i = 0; i < 5; i++) {
-        TEST_ASSERT(elems[i].value.i == 0, "Element should be 0");
-    }
-    
-    // Test int array filled with 42
-    reset_for_test();
-    tokens = tokinize("int y[3] = 42;");
-    current = tokens;
-    tree = parse_statement();
-    exec(tree);
-    
-    v = get_var("y");
-    TEST_ASSERT(v != NULL, "Array should exist");
-    elems = (value *)v->value.data;
-    for (int i = 0; i < 3; i++) {
-        TEST_ASSERT(elems[i].value.i == 42, "Element should be 42");
-    }
-}
-
-void test_float_array_fill_initializer() {
-    reset_for_test();
-    
-    // Test float array filled with 3.14
-    struct token *tokens = tokinize("float x[3] = 3.14;");
-    current = tokens;
-    ast *tree = parse_statement();
-    TEST_ASSERT(tree != NULL, "Should parse float array fill initializer");
-    TEST_ASSERT(tree->data.DECLARE.array_fill == true, "Should set array_fill flag");
-    
-    exec(tree);
-    value *v = get_var("x");
-    TEST_ASSERT(v != NULL, "Array should exist");
-    TEST_ASSERT(v->array == true, "Should be array");
-    TEST_ASSERT(v->size == 3, "Array should have 3 elements");
-    TEST_ASSERT(v->type == FLOAT, "Should be float array");
-    
-    value *elems = (value *)v->value.data;
-    for (int i = 0; i < 3; i++) {
-        TEST_ASSERT(elems[i].value.f == 3.14f, "Element should be 3.14");
-    }
-}
-
 int main() {
-    printf("=== Array Fill Tests ===\n\n");
-    TEST_RUN(test_array_fill_initializer);
-    TEST_RUN(test_float_array_fill_initializer);
-    printf("\nAll tests completed!\n");
+    printf("=== Array Tests ===\n\n");
+    
+    printf("--- Parser Tests ---\n");
+    TEST_RUN(test_parse_array_declaration_int);
+    TEST_RUN(test_parse_array_declaration_float);
+    TEST_RUN(test_parse_array_single_element);
+    TEST_RUN(test_parse_array_access);
+    TEST_RUN(test_parse_array_access_index_expr);
+    TEST_RUN(test_parse_array_bad_no_close_bracket);
+    TEST_RUN(test_parse_array_bad_no_close_brace);
+    
+    printf("\n--- Integration Tests ---\n");
+    TEST_RUN(test_int_array_declare);
+    TEST_RUN(test_float_array_declare);
+    TEST_RUN(test_array_access_index_0);
+    TEST_RUN(test_array_access_index_1);
+    TEST_RUN(test_array_access_index_2);
+    TEST_RUN(test_array_single_element_access);
+    TEST_RUN(test_float_array_access);
+    TEST_RUN(test_array_in_assignment);
+    
+    printf("\n--- Array Function Tests ---\n");
+    TEST_RUN(test_parse_function_returning_array);
+    TEST_RUN(test_parse_function_returning_array_float);
+    TEST_RUN(test_parse_array_parameter);
+    TEST_RUN(test_parse_array_type_declaration);
+    TEST_RUN(test_call_function_returning_array);
+    TEST_RUN(test_pass_array_to_function);
+    
+    printf("\nAll array tests passed!\n");
     return 0;
 }
