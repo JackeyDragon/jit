@@ -42,6 +42,34 @@ value builtin_print(value **args, int arg_count) {
   return VOID_VALUE;
 }
 
+value build_in_error(value **args, int arg_count) {
+  if (arg_count != 1 || args[0]->type != INT)
+    return ERROR_VALUE;
+
+  printf("\x1b[31mERRRRRRRORRRRRRRRRRR!!!!!!!!!!!!!!!!!!!!!!!! NUMBER %d\x1b[0m",
+         args[0]->value.i);
+
+  return VOID_VALUE;
+}
+
+value build_in_srand(value **args, int arg_count) {
+  if (arg_count != 1)
+    return ERROR_VALUE;
+
+  srand(args[0]->value.i);
+  return VOID_VALUE;
+}
+
+value build_in_rand(value **args, int arg_count) {
+  if (arg_count != 1)
+    return ERROR_VALUE;
+
+  int x = rand() % args[0]->value.i;
+  value val =
+      (value){.array = false, .size = sizeof(int), .type = INT, .value.i = x};
+  return val;
+}
+
 value built_in_debugg_print(value **args, int arg_count) {
   printf("we are here\n");
   return VOID_VALUE;
@@ -390,4 +418,28 @@ void register_functions() {
                                   .c_function = built_in_debugg_print};
 
   insert_function_struct(&debugg_print);
+
+  static function error_func = {.name = "error",
+                                .return_type = &void_type,
+                                .parameter_count = 1,
+                                .build_in = true,
+                                .c_function = build_in_error};
+
+  insert_function_struct(&error_func);
+
+  static function srand_func = {.name = "srand",
+                                .return_type = &void_type,
+                                .parameter_count = 1,
+                                .build_in = true,
+                                .c_function = build_in_srand};
+
+  insert_function_struct(&srand_func);
+
+  static function rand_func = {.name = "rand",
+                               .return_type = &int_type,
+                               .parameter_count = 1,
+                               .build_in = true,
+                               .c_function = build_in_rand};
+
+  insert_function_struct(&rand_func);
 }
