@@ -46,8 +46,9 @@ value build_in_error(value **args, int arg_count) {
   if (arg_count != 1 || args[0]->type != INT)
     return ERROR_VALUE;
 
-  printf("\x1b[31mERRRRRRRORRRRRRRRRRR!!!!!!!!!!!!!!!!!!!!!!!! NUMBER %d\x1b[0m",
-         args[0]->value.i);
+  printf(
+      "\x1b[31mERRRRRRRORRRRRRRRRRR!!!!!!!!!!!!!!!!!!!!!!!! NUMBER %d\x1b[0m\n",
+      args[0]->value.i);
 
   return VOID_VALUE;
 }
