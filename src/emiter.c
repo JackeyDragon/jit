@@ -539,11 +539,9 @@ int declare() {
       }
 
       if (val.array && val.size > 0 && val.value.data) {
-        void *new_data = malloc(sizeof(value) * val.size);
-        if (!new_data)
-          return 1;
-        memcpy(new_data, val.value.data, sizeof(value) * val.size);
-        val.value.data = new_data;
+        value *dup = valuedup(&val);
+        val = *dup;
+        free(dup);
       }
 
       insert(current_statement->data.DECLARE.identifyer->data.IDENTIFYER.name,
