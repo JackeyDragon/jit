@@ -300,6 +300,7 @@ struct token *tokinize(char *string) {
       pos++;
       break;
     } else {
+      printf("invalid token");
       exit(1);
     }
   }
